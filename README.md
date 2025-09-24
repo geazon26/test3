@@ -70,13 +70,12 @@
             color: var(--main-marker-color); /* Utilise la variable de couleur */
             text-shadow: 0 0 3px white, 0 0 3px white;
         }
+        .draggable-marker.locked .marker-label {
+            display: none;
+        }
         /* Classe pour le contour du bouton actif, utilisant la variable de couleur */
         .active-marker-ring {
              --tw-ring-color: var(--main-marker-color);
-        }
-        /* Cache le label quand le marqueur est verrouillé */
-        .draggable-marker.locked .marker-label {
-            display: none;
         }
         /* Cache le bouton radio par défaut */
         .radio-selector {
@@ -145,14 +144,6 @@
             width: 1px;
             transform: translateX(-50%);
         }
-        .lock-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            font-size: 1.25rem;
-        }
         /* Styles pour la palette de couleurs */
         .color-swatch {
             transition: transform 0.1s ease-in-out, border-color 0.1s ease-in-out;
@@ -161,6 +152,57 @@
             border-color: #3b82f6; /* Anneau bleu pour indiquer la sélection */
             transform: scale(1.15);
         }
+        /* Style pour la poubelle */
+        #trashCan {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            width: 3rem;
+            height: 3rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: transform 0.2s, background-color 0.2s;
+            z-index: 6; /* Au-dessus des marqueurs */
+            pointer-events: none; /* La poubelle ne doit pas intercepter les clics de départ */
+        }
+        #trashCan.hovering {
+            transform: scale(1.1);
+            background-color: #fecaca; /* red-200 */
+        }
+        /* Style pour la croix directionnelle (D-Pad) */
+        #dpad-controls {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            width: 6rem; /* 96px */
+            height: 6rem; /* 96px */
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            z-index: 7;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+        }
+        .dpad-btn {
+            background-color: rgba(243, 244, 246, 0.8); /* gray-100 */
+            border: 1px solid rgba(209, 213, 219, 0.9); /* gray-300 */
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #374151; /* gray-700 */
+            transition: background-color 0.15s;
+        }
+        .dpad-btn:active {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        #dpad-up { grid-area: 1 / 2 / 2 / 3; border-radius: 10px 10px 0 0;}
+        #dpad-left { grid-area: 2 / 1 / 3 / 2; border-radius: 10px 0 0 10px;}
+        #dpad-right { grid-area: 2 / 3 / 3 / 4; border-radius: 0 10px 10px 0;}
+        #dpad-down { grid-area: 3 / 2 / 4 / 3; border-radius: 0 0 10px 10px;}
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -169,42 +211,50 @@
         <!-- Titre de l'application -->
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Easy Register (nom de la machine)</h1>
 
-        <!-- Le bouton pour sélectionner une image -->
-        <label for="imageUpload" class="inline-block bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors duration-300 ease-in-out shadow-md">
-            Sélectionner une image
-        </label>
-        <input type="file" id="imageUpload" class="hidden" accept="image/*">
+        <!-- Conteneur pour les boutons du haut -->
+        <div class="flex justify-center items-center space-x-4 mb-6">
+            <!-- Le bouton pour sélectionner une image -->
+            <label for="imageUpload" class="inline-block bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors duration-300 ease-in-out shadow-md">
+                Sélectionner une image
+            </label>
+            <input type="file" id="imageUpload" class="hidden" accept="image/*">
+            <!-- Le bouton Options -->
+            <button id="optionsBtn" class="bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">Options</button>
+        </div>
 
-        <!-- La zone où l'image et les marqueurs seront affichés -->
-        <div class="mt-8">
+        <!-- La zone où l'image et les marqueurs seront affichés, cachée par défaut -->
+        <div id="imageDisplayArea" class="mt-8 hidden">
             <div id="imageContainer">
-                <img id="imagePreview" src="" alt="Aperçu de l'image" class="max-w-full mx-auto rounded-lg shadow-md"/>
+                <img id="imagePreview" alt="Aperçu de l'image" class="max-w-full mx-auto rounded-lg shadow-md"/>
+                <!-- La poubelle pour supprimer les marqueurs -->
+                <div id="trashCan">🗑️</div>
                  <!-- La loupe de zoom, cachée par défaut -->
                 <div id="magnifier-glass" class="hidden">
                     <div class="magnifier-crosshair-h"></div>
                     <div class="magnifier-crosshair-v"></div>
+                </div>
+                 <!-- La croix directionnelle (D-Pad) -->
+                <div id="dpad-controls">
+                    <button id="dpad-up" class="dpad-btn">↑</button>
+                    <button id="dpad-left" class="dpad-btn">←</button>
+                    <button id="dpad-right" class="dpad-btn">→</button>
+                    <button id="dpad-down" class="dpad-btn">↓</button>
                 </div>
             </div>
         </div>
         
         <!-- Conteneur pour les boutons, caché par défaut -->
         <div id="controlsContainer" class="mt-6 hidden">
-             <p class="text-sm text-gray-600 mb-3">Cliquez pour ajouter/supprimer. Sélectionnez une couronne pour définir la référence.</p>
-            <div class="flex justify-center space-x-2 flex-wrap gap-y-2">
+             <p class="text-sm text-gray-600 mb-3">Cliquez pour ajouter/verrouiller une fléxo et définir la référence.</p>
+            <div class="flex justify-center items-start space-x-3 flex-wrap gap-y-2">
                 <!-- Groupes F1-D -->
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F1">🔓</button><button data-marker-id="F1" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F1</button><input type="radio" name="marker-select" id="radio-F1" data-target-button="F1" class="radio-selector"><label for="radio-F1" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F2">🔓</button><button data-marker-id="F2" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F2</button><input type="radio" name="marker-select" id="radio-F2" data-target-button="F2" class="radio-selector"><label for="radio-F2" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F3">🔓</button><button data-marker-id="F3" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F3</button><input type="radio" name="marker-select" id="radio-F3" data-target-button="F3" class="radio-selector"><label for="radio-F3" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F4">🔓</button><button data-marker-id="F4" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F4</button><input type="radio" name="marker-select" id="radio-F4" data-target-button="F4" class="radio-selector"><label for="radio-F4" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F5">🔓</button><button data-marker-id="F5" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F5</button><input type="radio" name="marker-select" id="radio-F5" data-target-button="F5" class="radio-selector"><label for="radio-F5" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="F6">🔓</button><button data-marker-id="F6" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F6</button><input type="radio" name="marker-select" id="radio-F6" data-target-button="F6" class="radio-selector"><label for="radio-F6" class="radio-label"></label></div>
-                <div class="flex flex-col items-center space-y-1"><button class="lock-btn" data-target-marker="D">🔓</button><button data-marker-id="D" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">D</button><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div>
-            </div>
-            
-            <!-- Conteneur pour les boutons d'action -->
-            <div class="mt-6 flex justify-center space-x-4">
-                <button id="calculateBtn" class="bg-green-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-green-600 transition-colors">Calculer les corrections</button>
-                <button id="optionsBtn" class="bg-gray-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-600 transition-colors">Options</button>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F1" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F1</button><div><input type="radio" name="marker-select" id="radio-F1" data-target-button="F1" class="radio-selector"><label for="radio-F1" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F2" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F2</button><div><input type="radio" name="marker-select" id="radio-F2" data-target-button="F2" class="radio-selector"><label for="radio-F2" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F3" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F3</button><div><input type="radio" name="marker-select" id="radio-F3" data-target-button="F3" class="radio-selector"><label for="radio-F3" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F4" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F4</button><div><input type="radio" name="marker-select" id="radio-F4" data-target-button="F4" class="radio-selector"><label for="radio-F4" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F5" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F5</button><div><input type="radio" name="marker-select" id="radio-F5" data-target-button="F5" class="radio-selector"><label for="radio-F5" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F6" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F6</button><div><input type="radio" name="marker-select" id="radio-F6" data-target-button="F6" class="radio-selector"><label for="radio-F6" class="radio-label"></label></div></div>
+                <div class="flex flex-col items-center space-y-2"><button data-marker-id="D" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">D</button><div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div></div>
             </div>
         </div>
         
@@ -240,13 +290,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             const imageUploadInput = document.getElementById('imageUpload');
             const imagePreviewElement = document.getElementById('imagePreview');
+            const imageDisplayArea = document.getElementById('imageDisplayArea');
             const imageContainer = document.getElementById('imageContainer');
             const controlsContainer = document.getElementById('controlsContainer');
             const markerButtons = document.querySelectorAll('.marker-btn');
             const radioSelectors = document.querySelectorAll('.radio-selector');
             const correctionsContainer = document.getElementById('correctionsContainer');
-            const calculateBtn = document.getElementById('calculateBtn');
-            const lockButtons = document.querySelectorAll('.lock-btn');
+            const trashCan = document.getElementById('trashCan');
             
             const optionsBtn = document.getElementById('optionsBtn');
             const optionsModal = document.getElementById('optionsModal');
@@ -258,7 +308,16 @@
             const magnifierGlass = document.getElementById('magnifier-glass');
             const zoomLevel = 4;
 
+            // --- NOUVEAUX ELEMENTS D-PAD ---
+            const dpadControls = document.getElementById('dpad-controls');
+            const dpadUp = document.getElementById('dpad-up');
+            const dpadDown = document.getElementById('dpad-down');
+            const dpadLeft = document.getElementById('dpad-left');
+            const dpadRight = document.getElementById('dpad-right');
+            
             let activeMarker = null;
+            let lastSelectedMarker = null; // Mémorise le dernier marqueur déplacé
+            let magnifierHideTimer = null; // Timer pour cacher la loupe
             
             // --- GESTION DES COULEURS ---
             const colorPaletteContainer = document.getElementById('color-palette');
@@ -276,10 +335,7 @@
                     swatch.classList.add('selected'); // Sélectionne la première couleur par défaut
                 }
                 swatch.addEventListener('click', () => {
-                    // Met à jour la variable CSS globale
                     document.documentElement.style.setProperty('--main-marker-color', color);
-                    
-                    // Met à jour l'indicateur visuel de sélection
                     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
                     swatch.classList.add('selected');
                 });
@@ -287,7 +343,6 @@
             });
 
             imageUploadInput.addEventListener('change', function(event) {
-                // 1. Sauvegarder la position du master s'il existe
                 let savedMasterId = null;
                 let savedPosition = null;
                 const selectedRadio = document.querySelector('.radio-selector:checked');
@@ -295,53 +350,35 @@
                     savedMasterId = selectedRadio.dataset.targetButton;
                     const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${savedMasterId}"]`);
                     if (mainMarker) {
-                        savedPosition = {
-                            left: mainMarker.style.left,
-                            top: mainMarker.style.top
-                        };
+                        savedPosition = { left: mainMarker.style.left, top: mainMarker.style.top };
                     }
                 }
-
-                // 2. Réinitialiser l'interface
-                // Supprimer tous les marqueurs
                 document.querySelectorAll('.draggable-marker').forEach(marker => marker.remove());
-                
-                // Réinitialiser les boutons de contrôle
                 markerButtons.forEach(btn => {
                     btn.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white', 'ring-2', 'active-marker-ring');
                     btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
                 });
-                
-                // Décocher tous les boutons radio
                 radioSelectors.forEach(radio => radio.checked = false);
-
-                // Réinitialiser les cadenas
-                lockButtons.forEach(lock => lock.textContent = '🔓');
-                
-                // Cacher le rapport de corrections
                 correctionsContainer.innerHTML = '';
                 correctionsContainer.classList.add('hidden');
+                imageDisplayArea.classList.add('hidden');
 
-                // 3. Charger la nouvelle image
                 if (event.target.files && event.target.files[0]) {
                     const file = event.target.files[0];
                     const imageURL = URL.createObjectURL(file);
                     imagePreviewElement.src = imageURL;
                     magnifierGlass.style.backgroundImage = `url('${imageURL}')`;
-
                     imagePreviewElement.onload = () => {
+                        imageDisplayArea.classList.remove('hidden'); 
                         controlsContainer.classList.remove('hidden');
-
-                        // 4. Recréer le master s'il était sauvegardé
                         if (savedMasterId && savedPosition) {
                             createMarker(savedMasterId);
                             const newMasterMarker = document.querySelector(`.draggable-marker[data-marker-id="${savedMasterId}"]`);
                             if (newMasterMarker) {
                                 newMasterMarker.style.left = savedPosition.left;
                                 newMasterMarker.style.top = savedPosition.top;
+                                lastSelectedMarker = newMasterMarker; // On le redéfinit comme dernier sélectionné
                             }
-                            
-                            // 5. Sélectionner visuellement le master à nouveau
                             const masterRadio = document.querySelector(`#radio-${savedMasterId}`);
                             if (masterRadio) {
                                 masterRadio.checked = true;
@@ -360,33 +397,11 @@
                 button.addEventListener('click', () => {
                     const markerId = button.dataset.markerId;
                     const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
+
                     if (existingMarker) {
-                        existingMarker.remove();
-                        button.classList.remove('ring-2', 'active-marker-ring'); // Désactive le contour
-                        const lockButton = document.querySelector(`.lock-btn[data-target-marker="${markerId}"]`);
-                        if (lockButton) {
-                            lockButton.textContent = '🔓';
-                        }
+                        existingMarker.classList.toggle('locked');
                     } else {
                         createMarker(markerId);
-                    }
-                });
-            });
-
-            lockButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const button = event.currentTarget;
-                    const markerId = button.dataset.targetMarker;
-                    const marker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
-                    if (!marker) return;
-
-                    const isLocked = marker.classList.contains('locked');
-                    if (isLocked) {
-                        marker.classList.remove('locked');
-                        button.textContent = '🔓';
-                    } else {
-                        marker.classList.add('locked');
-                        button.textContent = '🔒';
                     }
                 });
             });
@@ -405,11 +420,10 @@
                             targetButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
                         }
                     }
+                    updateCorrections(); // Calcul automatique au changement de master
                 });
             });
             
-            calculateBtn.addEventListener('click', updateCorrections);
-
             function createMarker(id) {
                 const marker = document.createElement('div');
                 marker.className = 'draggable-marker';
@@ -430,16 +444,11 @@
                 marker.addEventListener('mousedown', dragStart);
                 marker.addEventListener('touchstart', dragStart, { passive: false });
                 
-                // Met en évidence le bouton correspondant
                 const correspondingButton = document.querySelector(`.marker-btn[data-marker-id="${id}"]`);
                 if (correspondingButton) {
                    correspondingButton.classList.add('ring-2', 'active-marker-ring');
                 }
-
-                const lockButton = document.querySelector(`.lock-btn[data-target-marker="${id}"]`);
-                if (lockButton) {
-                    lockButton.textContent = '🔓';
-                }
+                updateCorrections(); // Calcul automatique à la création
             }
             
             function updateCorrections() {
@@ -484,7 +493,6 @@
                 correctionsContainer.classList.remove('hidden');
             }
 
-            // --- Logique pour la modale et le slider ---
             optionsBtn.addEventListener('click', () => {
                 optionsModal.classList.remove('hidden');
                 optionsModalBackdrop.classList.remove('hidden');
@@ -503,8 +511,6 @@
                 updateMarkerSizes(value);
             });
 
-
-
             function calculateScale(value) {
                 value = parseInt(value);
                 let scale;
@@ -518,13 +524,11 @@
 
             function updateMarkerSizes(value) {
                 const scale = calculateScale(value);
-                const markers = document.querySelectorAll('.draggable-marker');
-                markers.forEach(marker => {
+                document.querySelectorAll('.draggable-marker').forEach(marker => {
                     marker.style.transform = `translate(-50%, -50%) scale(${scale})`;
                 });
             }
 
-            // --- Fonctions pour la loupe de zoom ---
             function updateMagnifier(x_on_image, y_on_image) {
                 const imageRect = imagePreviewElement.getBoundingClientRect();
                 const glassWidth = magnifierGlass.offsetWidth;
@@ -535,34 +539,87 @@
                 magnifierGlass.style.backgroundPosition = `${bgX}px ${bgY}px`;
             }
 
-            // --- Fonctions pour le glisser-déposer ---
+            // --- Fonctions D-PAD ---
+            function moveLastMarker(dx, dy) {
+                if (!lastSelectedMarker || lastSelectedMarker.classList.contains('locked')) return;
+
+                if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
+
+                const currentX = parseFloat(lastSelectedMarker.style.left);
+                const currentY = parseFloat(lastSelectedMarker.style.top);
+                lastSelectedMarker.style.left = `${currentX + dx}px`;
+                lastSelectedMarker.style.top = `${currentY + dy}px`;
+
+                const imageRect = imagePreviewElement.getBoundingClientRect();
+                const containerRect = imageContainer.getBoundingClientRect();
+                const imageOffsetX = imageRect.left - containerRect.left;
+                const imageOffsetY = imageRect.top - containerRect.top;
+                const x_on_image = (currentX + dx) - imageOffsetX;
+                const y_on_image = (currentY + dy) - imageOffsetY;
+                
+                magnifierGlass.classList.remove('hidden');
+                updateMagnifier(x_on_image, y_on_image);
+
+                magnifierHideTimer = setTimeout(() => {
+                    magnifierGlass.classList.add('hidden');
+                }, 3000);
+                updateCorrections(); // Calcul automatique après déplacement au D-Pad
+            }
+
+            dpadUp.addEventListener('click', () => moveLastMarker(0, -1));
+            dpadDown.addEventListener('click', () => moveLastMarker(0, 1));
+            dpadLeft.addEventListener('click', () => moveLastMarker(-1, 0));
+            dpadRight.addEventListener('click', () => moveLastMarker(1, 0));
+
+
             function dragStart(e) {
+                if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
                 activeMarker = e.target.closest('.draggable-marker');
                 if (!activeMarker || activeMarker.classList.contains('locked')) {
                     activeMarker = null;
                     return;
                 }
+                lastSelectedMarker = activeMarker; // Mémoriser ce marqueur
                 e.preventDefault();
                 magnifierGlass.classList.remove('hidden');
+                
                 const imageRect = imagePreviewElement.getBoundingClientRect();
-                let clientX, clientY;
-                if (e.type.startsWith("touch")) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                } else {
-                    clientX = e.clientX;
-                    clientY = e.clientY;
-                }
-                let cursorX_on_image = clientX - imageRect.left;
-                let cursorY_on_image = clientY - imageRect.top;
-                cursorX_on_image = Math.max(0, Math.min(cursorX_on_image, imageRect.width));
-                cursorY_on_image = Math.max(0, Math.min(cursorY_on_image, imageRect.height));
+                let clientX = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.startsWith("touch") ? e.touches[0].clientY : e.clientY;
+                let cursorX_on_image = Math.max(0, Math.min(clientX - imageRect.left, imageRect.width));
+                let cursorY_on_image = Math.max(0, Math.min(clientY - imageRect.top, imageRect.height));
                 updateMagnifier(cursorX_on_image, cursorY_on_image);
             }
 
-            function dragEnd() {
+            function dragEnd(e) {
                 if(activeMarker) {
-                    magnifierGlass.classList.add('hidden');
+                    const markerRect = activeMarker.getBoundingClientRect();
+                    const trashRect = trashCan.getBoundingClientRect();
+                    const isOverTrash = !(markerRect.right < trashRect.left || markerRect.left > trashRect.right || markerRect.bottom < trashRect.top || markerRect.top > trashRect.bottom);
+
+                    if (isOverTrash) {
+                        const markerId = activeMarker.dataset.markerId;
+                        activeMarker.remove();
+                        if (lastSelectedMarker === activeMarker) lastSelectedMarker = null;
+                        const button = document.querySelector(`.marker-btn[data-marker-id="${markerId}"]`);
+                        if (button) button.classList.remove('ring-2', 'active-marker-ring');
+                        const radio = document.querySelector(`#radio-${markerId}`);
+                        if (radio && radio.checked) {
+                            radio.checked = false;
+                            if (button) {
+                                button.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white');
+                                button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                            }
+                        }
+                    }
+
+                    if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
+                    magnifierHideTimer = setTimeout(() => {
+                        magnifierGlass.classList.add('hidden');
+                    }, 3000);
+                    
+                    trashCan.classList.remove('hovering');
+                    updateCorrections(); // Calcul automatique après déplacement ou suppression
                 }
                 activeMarker = null;
             }
@@ -570,20 +627,14 @@
             function drag(e) {
                 if (!activeMarker) return;
                 e.preventDefault(); 
+                
                 const containerRect = imageContainer.getBoundingClientRect();
                 const imageRect = imagePreviewElement.getBoundingClientRect();
-                let clientX, clientY;
-                if (e.type.startsWith("touch")) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                } else {
-                    clientX = e.clientX;
-                    clientY = e.clientY;
-                }
-                let cursorX_on_image = clientX - imageRect.left;
-                let cursorY_on_image = clientY - imageRect.top;
-                cursorX_on_image = Math.max(0, Math.min(cursorX_on_image, imageRect.width));
-                cursorY_on_image = Math.max(0, Math.min(cursorY_on_image, imageRect.height));
+                let clientX = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.startsWith("touch") ? e.touches[0].clientY : e.clientY;
+                let cursorX_on_image = Math.max(0, Math.min(clientX - imageRect.left, imageRect.width));
+                let cursorY_on_image = Math.max(0, Math.min(clientY - imageRect.top, imageRect.height));
+                
                 const imageOffsetX = imageRect.left - containerRect.left;
                 const imageOffsetY = imageRect.top - containerRect.top;
                 let markerX = imageOffsetX + cursorX_on_image;
@@ -591,6 +642,11 @@
                 activeMarker.style.left = `${markerX}px`;
                 activeMarker.style.top = `${markerY}px`;
                 updateMagnifier(cursorX_on_image, cursorY_on_image);
+
+                const markerRect = activeMarker.getBoundingClientRect();
+                const trashRect = trashCan.getBoundingClientRect();
+                const isOverTrash = !(markerRect.right < trashRect.left || markerRect.left > trashRect.right || markerRect.bottom < trashRect.top || markerRect.top > trashRect.bottom);
+                trashCan.classList.toggle('hovering', isOverTrash);
             }
 
             document.addEventListener('mouseup', dragEnd);
