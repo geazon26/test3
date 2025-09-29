@@ -535,14 +535,49 @@
             });
             
             function saveState() {
-                localStorage.setItem('easyRegisterState', JSON.stringify({ sequence }));
+                const config = {
+                    machineName: machineNameInput.value,
+                    flexoCount: parseInt(flexoCountSlider.value, 10),
+                    pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
+                    bluetoothDeviceName: bluetoothDeviceNameInput.value,
+                    sequence: sequence
+                };
+                localStorage.setItem('easyRegisterState', JSON.stringify(config));
+            }
+            
+            function applyConfig(config) {
+                if (config.machineName) {
+                    machineNameInput.value = config.machineName;
+                    machineNameDisplay.textContent = config.machineName;
+                }
+                if (config.flexoCount) {
+                    const count = parseInt(config.flexoCount, 10);
+                    flexoCountSlider.value = count;
+                    flexoCountValue.textContent = count;
+                    generateMarkerButtons(count);
+                }
+                if (config.pixelToMmRatio) {
+                    pixelToMmRatioInput.value = config.pixelToMmRatio;
+                }
+                if (config.bluetoothDeviceName) {
+                    bluetoothDeviceNameInput.value = config.bluetoothDeviceName;
+                    btDeviceName = config.bluetoothDeviceName;
+                }
+                if (config.sequence) {
+                    sequence = config.sequence;
+                }
+                updateCorrections();
             }
 
             function loadState() {
                 const savedState = localStorage.getItem('easyRegisterState');
                 if (savedState) {
-                    const parsedState = JSON.parse(savedState);
-                    sequence = parsedState.sequence || [];
+                    const config = JSON.parse(savedState);
+                    applyConfig(config);
+                } else {
+                    const initialFlexoCount = 6;
+                    generateMarkerButtons(initialFlexoCount);
+                    initializeDefaultSequence(initialFlexoCount);
                 }
             }
             
@@ -824,6 +859,7 @@
 
             machineNameInput.addEventListener('input', (e) => {
                 machineNameDisplay.textContent = e.target.value || 'nom de la machine';
+                saveState();
             });
             
             flexoCountSlider.addEventListener('input', (e) => {
@@ -834,10 +870,14 @@
                 initializeDefaultSequence(count);
             });
             
-            pixelToMmRatioInput.addEventListener('input', updateCorrections);
+            pixelToMmRatioInput.addEventListener('input', () => {
+                updateCorrections();
+                saveState();
+            });
             
             bluetoothDeviceNameInput.addEventListener('input', (e) => {
                 btDeviceName = e.target.value;
+                saveState();
             });
             
              function createSequenceAction(id, type, flexoId, name, x = '', y = '') {
