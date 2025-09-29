@@ -1391,13 +1391,12 @@
 
             // --- Initialisation ---
             loadState();
-            const initialFlexoCount = 6;
+            const initialFlexoCount = parseInt(flexoCountSlider.value, 10) || 6;
             generateMarkerButtons(initialFlexoCount);
             if (!sequence || sequence.length === 0) {
                  initializeDefaultSequence(initialFlexoCount);
             }
-            machineNameInput.value = 'nom de la machine';
-            pixelToMmRatioInput.value = '10';
+            machineNameInput.value = machineNameDisplay.textContent;
 
             document.addEventListener('mouseup', dragEnd);
             document.addEventListener('touchend', dragEnd);
