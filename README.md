@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --main-marker-color: #f97316; /* Couleur par défaut (Orange vif) */
+            --main-marker-color: #FF0000; /* Couleur par défaut (Rouge Vif) */
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -113,8 +113,6 @@
         /* --- Style pour la loupe de zoom --- */
         #magnifier-glass {
             position: absolute;
-            top: 10px;
-            right: 10px;
             width: 150px;
             height: 150px;
             border: 3px solid #000;
@@ -124,7 +122,7 @@
             z-index: 10;
             background-repeat: no-repeat;
             background-color: white;
-            transition: left 0.2s ease-in-out, right 0.2s ease-in-out, top 0.2s ease-in-out, bottom 0.2s ease-in-out;
+            /* La position est maintenant gérée par JS */
         }
         .magnifier-crosshair-h, .magnifier-crosshair-v {
             position: absolute;
@@ -205,6 +203,32 @@
         #dpad-left { grid-area: 2 / 1 / 3 / 2; border-radius: 10px 0 0 10px;}
         #dpad-right { grid-area: 2 / 3 / 3 / 4; border-radius: 0 10px 10px 0;}
         #dpad-down { grid-area: 3 / 2 / 4 / 3; border-radius: 0 0 10px 10px;}
+        
+        #up-arrow {
+            position: absolute;
+            top: 0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3rem;
+            height: 3rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            background: #e0e7ff;
+        }
+
+        .drag-over {
+            border-top: 2px solid #4f46e5;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -230,6 +254,12 @@
                 <img id="imagePreview" alt="Aperçu de l'image" class="max-w-full mx-auto rounded-lg shadow-md"/>
                 <!-- La poubelle pour supprimer les marqueurs -->
                 <div id="trashCan">🗑️</div>
+                <!-- Flèche vers le haut -->
+                <div id="up-arrow" class="hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </div>
                  <!-- La loupe de zoom, cachée par défaut -->
                 <div id="magnifier-glass" class="hidden">
                     <div class="magnifier-crosshair-h"></div>
@@ -295,10 +325,9 @@
     <!-- Fenêtre Modale pour le Mot de Passe -->
     <div id="passwordModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
     <div id="passwordModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Accès Protégé</h2>
-        <p class="text-gray-600 mb-4">Veuillez entrer le mot de passe administrateur.</p>
-        <input type="password" id="passwordInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2">
-        <p id="passwordError" class="text-red-500 text-sm h-4 mb-4"></p>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Accès aux Paramètres</h2>
+        <p class="text-gray-600 mb-4">Appuyez sur Entrée ou Valider pour continuer.</p>
+        <input type="password" id="passwordInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4">
         <div class="flex justify-end space-x-3">
             <button id="cancelPasswordBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-400">Annuler</button>
             <button id="submitPasswordBtn" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">Valider</button>
@@ -307,7 +336,7 @@
 
     <!-- Fenêtre Modale pour les Paramètres -->
     <div id="settingsModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="settingsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
+    <div id="settingsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-gray-800">Paramètres</h2>
             <button id="closeSettingsModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
@@ -329,7 +358,51 @@
                 <label for="bluetoothDeviceNameInput" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'appareil Bluetooth</label>
                 <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Gestion de la Configuration</label>
+                <div class="flex space-x-2">
+                    <button id="importConfigBtn" class="w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">Importer</button>
+                    <button id="exportConfigBtn" class="w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600">Exporter</button>
+                </div>
+                <input type="file" id="configFileUpload" class="hidden" accept=".json, .txt">
+            </div>
+            <div>
+                <button id="openSequenceEditorBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Éditeur de Séquence</button>
+            </div>
         </div>
+    </div>
+    
+    <!-- Fenêtre Modale pour l'Éditeur de Séquence -->
+    <div id="sequenceEditorModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+    <div id="sequenceEditorModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-2xl h-5/6 flex flex-col">
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
+            <h2 class="text-xl font-bold text-gray-800">Éditeur de Séquence</h2>
+            <div>
+                <button id="addSequenceActionBtn" class="bg-blue-500 text-white rounded-full h-8 w-8 flex items-center justify-center hover:bg-blue-600 text-xl font-bold">+</button>
+            </div>
+        </div>
+        <div id="sequence-fields-container" class="overflow-y-auto pr-2 space-y-2">
+             <!-- Les champs de coordonnées seront générés ici -->
+        </div>
+        <div class="mt-4 pt-4 border-t flex-shrink-0 flex justify-end">
+             <button id="saveSequenceBtn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293zM5 4a2 2 0 012-2h6a2 2 0 012 2v2a1 1 0 102 0V4a4 4 0 00-4-4H7a4 4 0 00-4 4v12a4 4 0 004 4h6a4 4 0 004-4v-2a1 1 0 10-2 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4z" />
+                </svg>
+                <span>Enregistrer</span>
+             </button>
+             <button id="closeSequenceEditorBtn" class="ml-4 bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-400">Fermer</button>
+        </div>
+    </div>
+    
+    <!-- Fenêtre Modale pour l'affichage de la Séquence -->
+    <div id="sequenceDisplayModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+    <div id="sequenceDisplayModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Séquence Générée</h2>
+            <button id="closeSequenceDisplayBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+        </div>
+        <pre id="sequence-output" class="bg-gray-100 p-4 rounded text-left text-sm whitespace-pre-wrap h-64 overflow-y-auto"></pre>
     </div>
 
 
@@ -349,6 +422,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- Récupération des éléments du DOM (partie 1) ---
             const imageUploadInput = document.getElementById('imageUpload');
             const imagePreviewElement = document.getElementById('imagePreview');
             const imageDisplayArea = document.getElementById('imageDisplayArea');
@@ -359,6 +433,7 @@
             const correctionsText = document.getElementById('correctionsText');
             const sendToScreenBtn = document.getElementById('sendToScreenBtn');
             const trashCan = document.getElementById('trashCan');
+            const upArrow = document.getElementById('up-arrow');
             
             // --- Modale Options ---
             const optionsBtn = document.getElementById('optionsBtn');
@@ -380,7 +455,6 @@
             const passwordModal = document.getElementById('passwordModal');
             const passwordModalBackdrop = document.getElementById('passwordModalBackdrop');
             const passwordInput = document.getElementById('passwordInput');
-            const passwordError = document.getElementById('passwordError');
             const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
             const submitPasswordBtn = document.getElementById('submitPasswordBtn');
 
@@ -394,6 +468,26 @@
             const flexoCountValue = document.getElementById('flexoCountValue');
             const bluetoothDeviceNameInput = document.getElementById('bluetoothDeviceNameInput');
             const pixelToMmRatioInput = document.getElementById('pixelToMmRatioInput');
+            const importConfigBtn = document.getElementById('importConfigBtn');
+            const exportConfigBtn = document.getElementById('exportConfigBtn');
+            const configFileUpload = document.getElementById('configFileUpload');
+
+            
+            // --- Modale Éditeur de Séquence ---
+            const openSequenceEditorBtn = document.getElementById('openSequenceEditorBtn');
+            const sequenceEditorModal = document.getElementById('sequenceEditorModal');
+            const sequenceEditorModalBackdrop = document.getElementById('sequenceEditorModalBackdrop');
+            const closeSequenceEditorBtn = document.getElementById('closeSequenceEditorBtn');
+            const sequenceFieldsContainer = document.getElementById('sequence-fields-container');
+            const addSequenceActionBtn = document.getElementById('addSequenceActionBtn');
+            const saveSequenceBtn = document.getElementById('saveSequenceBtn');
+
+
+            // --- Modale Affichage de Séquence ---
+            const sequenceDisplayModal = document.getElementById('sequenceDisplayModal');
+            const sequenceDisplayModalBackdrop = document.getElementById('sequenceDisplayModalBackdrop');
+            const closeSequenceDisplayBtn = document.getElementById('closeSequenceDisplayBtn');
+            const sequenceOutput = document.getElementById('sequence-output');
 
             // --- Bluetooth ---
             const bluetoothSearchBtn = document.getElementById('bluetoothSearchBtn');
@@ -415,6 +509,7 @@
             let lastSelectedMarker = null; 
             let magnifierHideTimer = null;
             let lastValidPosition = null;
+            let sequence = [];
             
             const colorPaletteContainer = document.getElementById('color-palette');
             const colors = [
@@ -438,7 +533,19 @@
                 });
                 colorPaletteContainer.appendChild(swatch);
             });
+            
+            function saveState() {
+                localStorage.setItem('easyRegisterState', JSON.stringify({ sequence }));
+            }
 
+            function loadState() {
+                const savedState = localStorage.getItem('easyRegisterState');
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    sequence = parsedState.sequence || [];
+                }
+            }
+            
             imageUploadInput.addEventListener('change', function(event) {
                 let savedMasterId = null;
                 let savedPosition = null;
@@ -460,6 +567,7 @@
                     imagePreviewElement.onload = () => {
                         imageDisplayArea.classList.remove('hidden'); 
                         controlsContainer.classList.remove('hidden');
+                        upArrow.classList.remove('hidden');
                         if (savedMasterId && savedPosition) {
                             createMarker(savedMasterId);
                             const newMasterMarker = document.querySelector(`.draggable-marker[data-marker-id="${savedMasterId}"]`);
@@ -658,6 +766,9 @@
 
             confirmSendBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = false;
+                
+                generateAndShowSequence();
+                
                 sendToScreenBtn.textContent = 'Envoyé !';
                 sendToScreenBtn.classList.replace('bg-indigo-600', 'bg-green-500');
                 sendToScreenBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
@@ -674,25 +785,41 @@
                 console.log('Saisie arrêtée.');
             });
 
-            // --- Logique Paramètres & Mot de Passe ---
+            // --- Logique Paramètres & Mot de Passe & Séquence ---
             openSettingsBtn.addEventListener('click', () => {
                 closeModal(optionsModal, optionsModalBackdrop);
-                passwordError.textContent = '';
                 passwordInput.value = '';
                 passwordModal.classList.remove('hidden');
                 passwordModalBackdrop.classList.remove('hidden');
+                passwordInput.focus();
+            });
+            
+            openSequenceEditorBtn.addEventListener('click', () => {
+                populateSequenceEditor();
+                closeModal(settingsModal, settingsModalBackdrop);
+                sequenceEditorModal.classList.remove('hidden');
+                sequenceEditorModalBackdrop.classList.remove('hidden');
             });
 
+            closeSequenceEditorBtn.addEventListener('click', () => closeModal(sequenceEditorModal, sequenceEditorModalBackdrop));
+            closeSequenceDisplayBtn.addEventListener('click', () => closeModal(sequenceDisplayModal, sequenceDisplayModalBackdrop));
+
+            function openSettings() {
+                closeModal(passwordModal, passwordModalBackdrop);
+                settingsModal.classList.remove('hidden');
+                settingsModalBackdrop.classList.remove('hidden');
+            }
+
             cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
-            submitPasswordBtn.addEventListener('click', () => {
-                if (passwordInput.value === 'ERadmin!') {
-                    closeModal(passwordModal, passwordModalBackdrop);
-                    settingsModal.classList.remove('hidden');
-                    settingsModalBackdrop.classList.remove('hidden');
-                } else {
-                    passwordError.textContent = 'Mot de passe incorrect.';
+            
+            submitPasswordBtn.addEventListener('click', openSettings);
+
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    openSettings();
                 }
             });
+
             closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
 
             machineNameInput.addEventListener('input', (e) => {
@@ -700,10 +827,11 @@
             });
             
             flexoCountSlider.addEventListener('input', (e) => {
-                const count = e.target.value;
+                const count = parseInt(e.target.value, 10);
                 flexoCountValue.textContent = count;
                 resetSession();
                 generateMarkerButtons(count);
+                initializeDefaultSequence(count);
             });
             
             pixelToMmRatioInput.addEventListener('input', updateCorrections);
@@ -711,6 +839,220 @@
             bluetoothDeviceNameInput.addEventListener('input', (e) => {
                 btDeviceName = e.target.value;
             });
+            
+             function createSequenceAction(id, type, flexoId, name, x = '', y = '') {
+                return { id, type, flexoId, name, x, y };
+            }
+
+            function initializeDefaultSequence(flexoCount) {
+                sequence = []; // Reset the global sequence
+                for (let i = 1; i <= flexoCount; i++) {
+                    sequence.push(createSequenceAction(`f${i}_reg`, 'FLEXO_REG', `F${i}`, `F${i} Registre`));
+                    sequence.push(createSequenceAction(`f${i}_cen`, 'FLEXO_CEN', `F${i}`, `F${i} Centrage`));
+                }
+                sequence.push(createSequenceAction('d_reg', 'DIECUT_REG', 'D', 'Découpe Registre'));
+                sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', 'D', 'Découpe Centrage'));
+                saveState();
+            }
+
+            
+            function populateSequenceEditor() {
+                sequenceFieldsContainer.innerHTML = ''; // Clear previous fields
+                const currentSequence = sequence || [];
+                
+                currentSequence.forEach(action => {
+                    const actionEl = createSequenceFieldHTML(action);
+                    sequenceFieldsContainer.appendChild(actionEl);
+                });
+                 addDragAndDropListeners();
+            }
+
+            function createSequenceFieldHTML(action) {
+                const { id, type, name, x, y } = action;
+                const isIntermediate = type === 'INTERMEDIATE_CLICK';
+
+                const element = document.createElement('div');
+                element.className = 'p-2 border rounded-md bg-white flex items-center space-x-2';
+                element.dataset.actionId = id;
+                
+                let content = `
+                    <span class="cursor-move text-gray-400">⠿</span>
+                    <input type="text" value="${name}" class="flex-grow font-semibold border-b p-1">
+                `;
+
+                if (isIntermediate) {
+                    content += `
+                        <div class="flex items-center space-x-1">
+                            <input type="number" placeholder="X" value="${x}" class="w-20 border rounded p-1">
+                            <input type="number" placeholder="Y" value="${y}" class="w-20 border rounded p-1">
+                        </div>
+                        <button class="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                    `;
+                } else {
+                     content += `<span class="text-sm text-gray-500 italic ml-auto">Saisie de valeur</span>`;
+                }
+                
+                element.innerHTML = content;
+                element.setAttribute('draggable', true);
+                
+                const nameInput = element.querySelector('input[type="text"]');
+                if (isIntermediate) {
+                    element.querySelector('button').addEventListener('click', () => {
+                        sequence = sequence.filter(a => a.id !== id);
+                        populateSequenceEditor();
+                    });
+                } else {
+                    nameInput.disabled = true;
+                    nameInput.classList.add('bg-gray-100');
+                }
+                return element;
+            }
+            
+            function saveSequenceFromEditor() {
+                const newSequence = [];
+                sequenceFieldsContainer.querySelectorAll('[data-action-id]').forEach(el => {
+                    const id = el.dataset.actionId;
+                    const originalAction = sequence.find(a => a.id === id);
+                    const name = el.querySelector('input[type="text"]').value;
+                    const xInput = el.querySelectorAll('input[type="number"]')[0];
+                    const yInput = el.querySelectorAll('input[type="number"]')[1];
+
+                    newSequence.push({ 
+                        ...originalAction, 
+                        name, 
+                        x: xInput ? xInput.value : '', 
+                        y: yInput ? yInput.value : '' 
+                    });
+                });
+                sequence = newSequence;
+                saveState();
+                
+                // Visual feedback for save button
+                const saveText = saveSequenceBtn.querySelector('span');
+                const originalText = saveText.textContent;
+                saveSequenceBtn.classList.replace('bg-green-500', 'bg-blue-500');
+                saveSequenceBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-600');
+                saveText.textContent = "Enregistré !";
+                setTimeout(() => {
+                    saveText.textContent = originalText;
+                    saveSequenceBtn.classList.replace('bg-blue-500', 'bg-green-500');
+                    saveSequenceBtn.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+                }, 1500);
+            }
+            
+            addSequenceActionBtn.addEventListener('click', () => {
+                const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'Nouvelle Action');
+                if (!sequence) {
+                    sequence = [];
+                }
+                sequence.push(newAction);
+                populateSequenceEditor();
+            });
+
+            saveSequenceBtn.addEventListener('click', saveSequenceFromEditor);
+
+            function addDragAndDropListeners() {
+                let draggingElement = null;
+                sequenceFieldsContainer.querySelectorAll('[draggable="true"]').forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggingElement = e.target.closest('[data-action-id]');
+                        setTimeout(() => {
+                           if(draggingElement) draggingElement.classList.add('dragging');
+                        }, 0);
+                    });
+
+                    item.addEventListener('dragend', () => {
+                        if (draggingElement) {
+                             draggingElement.classList.remove('dragging');
+                        }
+                        draggingElement = null;
+                        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    });
+                });
+
+                sequenceFieldsContainer.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(sequenceFieldsContainer, e.clientY);
+                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    if(afterElement) {
+                        afterElement.classList.add('drag-over');
+                    }
+                });
+
+                 sequenceFieldsContainer.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (!draggingElement) return;
+                    const afterElement = getDragAfterElement(sequenceFieldsContainer, e.clientY);
+                    if (afterElement == null) {
+                        sequenceFieldsContainer.appendChild(draggingElement);
+                    } else {
+                        sequenceFieldsContainer.insertBefore(draggingElement, afterElement);
+                    }
+                });
+            }
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('[draggable="true"]:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+
+            function generateAndShowSequence() {
+                let generatedSequence = [];
+                const savedSequence = sequence || [];
+                const pixelToMmRatio = parseFloat(pixelToMmRatioInput.value) || 1;
+                
+                const selectedRadio = document.querySelector('.radio-selector:checked');
+                if (!selectedRadio) {
+                    alert("Veuillez sélectionner une référence (couronne).");
+                    return;
+                }
+                const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${selectedRadio.dataset.targetButton}"]`);
+                if (!mainMarker) {
+                    alert("Marqueur de référence non trouvé sur l'image.");
+                    return;
+                }
+
+                const mainX = parseFloat(mainMarker.style.left);
+                const mainY = parseFloat(mainMarker.style.top);
+                const activeMarkers = new Map();
+                document.querySelectorAll('.draggable-marker').forEach(m => activeMarkers.set(m.dataset.markerId, m));
+                
+                savedSequence.forEach(action => {
+                    if (action.type === 'INTERMEDIATE_CLICK') {
+                        if(action.x && action.y) generatedSequence.push(`CLIC,${action.x},${action.y}`);
+                    } else {
+                        const marker = activeMarkers.get(action.flexoId);
+                        if(marker && marker !== mainMarker) {
+                            const secondaryX = parseFloat(marker.style.left);
+                            const secondaryY = parseFloat(marker.style.top);
+                            const correctionY_mm = ((mainY - secondaryY) / pixelToMmRatio).toFixed(2);
+                            const correctionX_mm = ((mainX - secondaryX) / pixelToMmRatio).toFixed(2);
+                            
+                            if (action.type.includes('REG')) {
+                                generatedSequence.push(`ECRIRE,${correctionY_mm}`);
+                            }
+                            if (action.type.includes('CEN')) {
+                                generatedSequence.push(`ECRIRE,${correctionX_mm}`);
+                            }
+                        }
+                    }
+                });
+
+
+                sequenceOutput.textContent = generatedSequence.join('\n');
+                sequenceDisplayModal.classList.remove('hidden');
+                sequenceDisplayModalBackdrop.classList.remove('hidden');
+            }
+
 
             // --- Logique Bluetooth ---
             bluetoothSearchBtn.addEventListener('click', async () => {
@@ -795,24 +1137,48 @@
                 const currentY = parseFloat(lastSelectedMarker.style.top);
                 lastSelectedMarker.style.left = `${currentX + dx}px`;
                 lastSelectedMarker.style.top = `${currentY + dy}px`;
+                
                 const imageRect = imagePreviewElement.getBoundingClientRect();
                 const containerRect = imageContainer.getBoundingClientRect();
                 const imageOffsetX = imageRect.left - containerRect.left;
                 const imageOffsetY = imageRect.top - containerRect.top;
                 const x_on_image = (currentX + dx) - imageOffsetX;
                 const y_on_image = (currentY + dy) - imageOffsetY;
+                
                 magnifierGlass.classList.remove('hidden');
                 updateMagnifier(x_on_image, y_on_image);
+                positionMagnifierNextTo(lastSelectedMarker);
+
                 magnifierHideTimer = setTimeout(() => {
                     magnifierGlass.classList.add('hidden');
                 }, 3000);
                 updateCorrections();
             }
 
-            dpadUp.addEventListener('click', () => moveLastMarker(0, -1));
-            dpadDown.addEventListener('click', () => moveLastMarker(0, 1));
-            dpadLeft.addEventListener('click', () => moveLastMarker(-1, 0));
-            dpadRight.addEventListener('click', () => moveLastMarker(1, 0));
+            function positionMagnifierNextTo(element) {
+                const markerRect = element.getBoundingClientRect();
+                const containerRect = imageContainer.getBoundingClientRect();
+                const offsetX = 20;
+                const offsetY = 20;
+
+                let magnifierX = (markerRect.left - containerRect.left + markerRect.width / 2) + offsetX;
+                let magnifierY = (markerRect.top - containerRect.top + markerRect.height / 2) + offsetY;
+
+                const glassWidth = magnifierGlass.offsetWidth;
+                const glassHeight = magnifierGlass.offsetHeight;
+                if (magnifierX + glassWidth > containerRect.width) {
+                    magnifierX = (markerRect.left - containerRect.left + markerRect.width / 2) - glassWidth - offsetX;
+                }
+                if (magnifierY + glassHeight > containerRect.height) {
+                    magnifierY = (markerRect.top - containerRect.top + markerRect.height / 2) - glassHeight - offsetY;
+                }
+                
+                magnifierGlass.style.left = `${magnifierX}px`;
+                magnifierGlass.style.top = `${magnifierY}px`;
+                magnifierGlass.style.right = 'auto';
+                magnifierGlass.style.bottom = 'auto';
+            }
+
 
             function dragStart(e) {
                 if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
@@ -886,6 +1252,26 @@
                 activeMarker.style.left = `${markerX}px`;
                 activeMarker.style.top = `${markerY}px`;
                 updateMagnifier(cursorX_on_image, cursorY_on_image);
+                
+                const offsetX = 20;
+                const offsetY = 20;
+                let magnifierX = (clientX - containerRect.left) + offsetX;
+                let magnifierY = (clientY - containerRect.top) + offsetY;
+
+                const glassWidth = magnifierGlass.offsetWidth;
+                const glassHeight = magnifierGlass.offsetHeight;
+                if (magnifierX + glassWidth > containerRect.width) {
+                    magnifierX = (clientX - containerRect.left) - glassWidth - offsetX;
+                }
+                if (magnifierY + glassHeight > containerRect.height) {
+                    magnifierY = (clientY - containerRect.top) - glassHeight - offsetY;
+                }
+
+                magnifierGlass.style.left = `${magnifierX}px`;
+                magnifierGlass.style.top = `${magnifierY}px`;
+                magnifierGlass.style.right = 'auto';
+                magnifierGlass.style.bottom = 'auto';
+
                 const markerRect = activeMarker.getBoundingClientRect();
                 handleToolRepositioning(markerRect);
             }
@@ -895,10 +1281,6 @@
             }
             
             function resetToolPositions() {
-                magnifierGlass.style.top = '10px';
-                magnifierGlass.style.bottom = 'auto';
-                magnifierGlass.style.right = '10px';
-                magnifierGlass.style.left = 'auto';
                 dpadControls.style.top = 'auto';
                 dpadControls.style.bottom = '0.5rem';
                 dpadControls.style.right = '0.5rem';
@@ -906,24 +1288,13 @@
             }
 
             function handleToolRepositioning(markerRect) {
-                 const containerRect = imageContainer.getBoundingClientRect();
-                 const margin = 10;
-                const glassDefaultRect = { top: containerRect.top + margin, left: containerRect.right - 150 - margin, width: 150, height: 150 };
-                glassDefaultRect.right = glassDefaultRect.left + 150;
-                glassDefaultRect.bottom = glassDefaultRect.top + 150;
+                const containerRect = imageContainer.getBoundingClientRect();
+                const margin = 10;
                 const dpadDefaultRect = { top: containerRect.bottom - 96 - margin, left: containerRect.right - 96 - margin, width: 96, height: 96 };
                 dpadDefaultRect.right = dpadDefaultRect.left + 96;
                 dpadDefaultRect.bottom = dpadDefaultRect.top + 96;
                 const trashRect = trashCan.getBoundingClientRect();
                 trashCan.classList.toggle('hovering', checkCollision(markerRect, trashRect));
-
-                if (checkCollision(markerRect, glassDefaultRect)) {
-                    magnifierGlass.style.right = 'auto';
-                    magnifierGlass.style.left = '10px';
-                } else {
-                    magnifierGlass.style.left = 'auto';
-                    magnifierGlass.style.right = '10px';
-                }
                 
                 if (checkCollision(markerRect, dpadDefaultRect)) {
                     const obstacles = [
@@ -979,7 +1350,12 @@
             }
 
             // --- Initialisation ---
-            generateMarkerButtons(6);
+            loadState();
+            const initialFlexoCount = 6;
+            generateMarkerButtons(initialFlexoCount);
+            if (!sequence || sequence.length === 0) {
+                 initializeDefaultSequence(initialFlexoCount);
+            }
             machineNameInput.value = 'nom de la machine';
             pixelToMmRatioInput.value = '10';
 
