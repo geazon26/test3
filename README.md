@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chargeur d'images avec Marqueurs</title>
     <!-- On importe Tailwind CSS pour un design moderne -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -211,7 +211,7 @@
 
     <div class="bg-white p-8 rounded-xl shadow-lg text-center max-w-2xl w-full">
         <!-- Titre de l'application -->
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Easy Register (nom de la machine)</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Easy Register (<span id="machineNameDisplay">nom de la machine</span>)</h1>
 
         <!-- Conteneur pour les boutons du haut -->
         <div class="flex justify-center items-center space-x-4 mb-6">
@@ -248,15 +248,8 @@
         <!-- Conteneur pour les boutons, caché par défaut -->
         <div id="controlsContainer" class="mt-6 hidden">
              <p class="text-sm text-gray-600 mb-3">Cliquez pour ajouter/verrouiller une fléxo et définir la référence.</p>
-            <div class="flex justify-center items-start space-x-3 flex-wrap gap-y-2">
-                <!-- Groupes F1-D -->
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F1" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F1</button><div><input type="radio" name="marker-select" id="radio-F1" data-target-button="F1" class="radio-selector"><label for="radio-F1" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F2" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F2</button><div><input type="radio" name="marker-select" id="radio-F2" data-target-button="F2" class="radio-selector"><label for="radio-F2" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F3" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F3</button><div><input type="radio" name="marker-select" id="radio-F3" data-target-button="F3" class="radio-selector"><label for="radio-F3" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F4" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F4</button><div><input type="radio" name="marker-select" id="radio-F4" data-target-button="F4" class="radio-selector"><label for="radio-F4" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F5" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F5</button><div><input type="radio" name="marker-select" id="radio-F5" data-target-button="F5" class="radio-selector"><label for="radio-F5" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="F6" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F6</button><div><input type="radio" name="marker-select" id="radio-F6" data-target-button="F6" class="radio-selector"><label for="radio-F6" class="radio-label"></label></div></div>
-                <div class="flex flex-col items-center space-y-2"><button data-marker-id="D" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">D</button><div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div></div>
+            <div id="marker-buttons-wrapper" class="flex justify-center items-start space-x-3 flex-wrap gap-y-2">
+                <!-- Les boutons de marqueurs seront générés ici par le JS -->
             </div>
         </div>
         
@@ -274,7 +267,7 @@
     <div id="optionsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-gray-800">Options</h2>
-            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            <button id="closeOptionsModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
         </div>
         <div class="space-y-6">
             <div>
@@ -287,11 +280,58 @@
                     <!-- Les pastilles de couleur seront injectées ici par le JS -->
                 </div>
             </div>
+             <div>
+                <button id="bluetoothSearchBtn" class="w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2">
+                    <span id="bluetoothBtnText">Rechercher via Bluetooth</span>
+                    <span id="bluetoothStatus" class="w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+            </div>
             <div>
-                <button id="settingsBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Paramètres</button>
+                <button id="openSettingsBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Paramètres</button>
             </div>
         </div>
     </div>
+    
+    <!-- Fenêtre Modale pour le Mot de Passe -->
+    <div id="passwordModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+    <div id="passwordModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Accès Protégé</h2>
+        <p class="text-gray-600 mb-4">Veuillez entrer le mot de passe administrateur.</p>
+        <input type="password" id="passwordInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2">
+        <p id="passwordError" class="text-red-500 text-sm h-4 mb-4"></p>
+        <div class="flex justify-end space-x-3">
+            <button id="cancelPasswordBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-400">Annuler</button>
+            <button id="submitPasswordBtn" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">Valider</button>
+        </div>
+    </div>
+
+    <!-- Fenêtre Modale pour les Paramètres -->
+    <div id="settingsModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+    <div id="settingsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Paramètres</h2>
+            <button id="closeSettingsModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+        </div>
+        <div class="space-y-6">
+            <div>
+                <label for="machineNameInput" class="block text-sm font-medium text-gray-700 mb-2">Nom de la machine</label>
+                <input type="text" id="machineNameInput" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+            </div>
+             <div>
+                <label for="flexoCountSlider" class="block text-sm font-medium text-gray-700 mb-2">Nombre de flexos (F): <span id="flexoCountValue">6</span></label>
+                <input type="range" id="flexoCountSlider" min="1" max="9" value="6" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <div>
+                <label for="pixelToMmRatioInput" class="block text-sm font-medium text-gray-700 mb-2">Pixels par millimètre (px/mm)</label>
+                <input type="number" id="pixelToMmRatioInput" value="10" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label for="bluetoothDeviceNameInput" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'appareil Bluetooth</label>
+                <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+            </div>
+        </div>
+    </div>
+
 
     <!-- Fenêtre Modale de Confirmation -->
     <div id="confirmationModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
@@ -314,29 +354,57 @@
             const imageDisplayArea = document.getElementById('imageDisplayArea');
             const imageContainer = document.getElementById('imageContainer');
             const controlsContainer = document.getElementById('controlsContainer');
-            const markerButtons = document.querySelectorAll('.marker-btn');
-            const radioSelectors = document.querySelectorAll('.radio-selector');
+            const markerButtonsWrapper = document.getElementById('marker-buttons-wrapper');
             const correctionsContainer = document.getElementById('correctionsContainer');
             const correctionsText = document.getElementById('correctionsText');
             const sendToScreenBtn = document.getElementById('sendToScreenBtn');
             const trashCan = document.getElementById('trashCan');
             
+            // --- Modale Options ---
             const optionsBtn = document.getElementById('optionsBtn');
             const optionsModal = document.getElementById('optionsModal');
             const optionsModalBackdrop = document.getElementById('optionsModalBackdrop');
-            const closeModalBtn = document.getElementById('closeModalBtn');
+            const closeOptionsModalBtn = document.getElementById('closeOptionsModalBtn');
             const markerSizeSlider = document.getElementById('markerSizeSlider');
             const sliderValueSpan = document.getElementById('sliderValueSpan');
             
+            // --- Modale Confirmation ---
             const confirmationModalBackdrop = document.getElementById('confirmationModalBackdrop');
             const confirmationModal = document.getElementById('confirmationModal');
             const cancelSendBtn = document.getElementById('cancelSendBtn');
             const confirmSendBtn = document.getElementById('confirmSendBtn');
             const stopInputBtn = document.getElementById('stopInputBtn');
             
+            // --- Modale Mot de Passe ---
+            const openSettingsBtn = document.getElementById('openSettingsBtn');
+            const passwordModal = document.getElementById('passwordModal');
+            const passwordModalBackdrop = document.getElementById('passwordModalBackdrop');
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+            const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+
+            // --- Modale Paramètres ---
+            const settingsModal = document.getElementById('settingsModal');
+            const settingsModalBackdrop = document.getElementById('settingsModalBackdrop');
+            const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+            const machineNameInput = document.getElementById('machineNameInput');
+            const machineNameDisplay = document.getElementById('machineNameDisplay');
+            const flexoCountSlider = document.getElementById('flexoCountSlider');
+            const flexoCountValue = document.getElementById('flexoCountValue');
+            const bluetoothDeviceNameInput = document.getElementById('bluetoothDeviceNameInput');
+            const pixelToMmRatioInput = document.getElementById('pixelToMmRatioInput');
+
+            // --- Bluetooth ---
+            const bluetoothSearchBtn = document.getElementById('bluetoothSearchBtn');
+            const bluetoothStatus = document.getElementById('bluetoothStatus');
+            const bluetoothBtnText = document.getElementById('bluetoothBtnText');
+            let connectedDevice = null;
+            let btDeviceName = '';
+
+            // --- Autres éléments ---
             const magnifierGlass = document.getElementById('magnifier-glass');
             const zoomLevel = 4;
-
             const dpadControls = document.getElementById('dpad-controls');
             const dpadUp = document.getElementById('dpad-up');
             const dpadDown = document.getElementById('dpad-down');
@@ -350,8 +418,8 @@
             
             const colorPaletteContainer = document.getElementById('color-palette');
             const colors = [
-                '#f97316', '#ef4444', '#3b82f6', '#22c55e', '#8b5cf6',
-                '#ec4899', '#14b8a6', '#eab308', '#84cc16', '#1f2937'
+                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF',
+                '#00FFFF', '#FF4500', '#7FFF00', '#9400D3', '#00FA9A'
             ];
 
             colors.forEach((color, index) => {
@@ -361,6 +429,7 @@
                 swatch.dataset.color = color;
                 if (index === 0) {
                     swatch.classList.add('selected');
+                    document.documentElement.style.setProperty('--main-marker-color', color);
                 }
                 swatch.addEventListener('click', () => {
                     document.documentElement.style.setProperty('--main-marker-color', color);
@@ -381,7 +450,7 @@
                         savedPosition = { left: mainMarker.style.left, top: mainMarker.style.top };
                     }
                 }
-                resetSession(); // On réinitialise la session avant de charger la nouvelle image
+                resetSession();
                 
                 if (event.target.files && event.target.files[0]) {
                     const file = event.target.files[0];
@@ -413,35 +482,61 @@
                 }
             });
             
-            markerButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const markerId = button.dataset.markerId;
-                    const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
-                    if (existingMarker) {
-                        existingMarker.classList.toggle('locked');
-                    } else {
-                        createMarker(markerId);
-                    }
-                });
-            });
-
-            radioSelectors.forEach(radio => {
-                radio.addEventListener('change', (event) => {
-                    markerButtons.forEach(btn => {
-                        btn.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white');
-                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
-                    });
-                    if (event.target.checked) {
-                        const targetButtonId = event.target.dataset.targetButton;
-                        const targetButton = document.querySelector(`.marker-btn[data-marker-id="${targetButtonId}"]`);
-                        if (targetButton) {
-                            targetButton.classList.add('bg-yellow-400', 'border-yellow-500', 'text-white');
-                            targetButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+            function addMarkerButtonListeners() {
+                document.querySelectorAll('.marker-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const markerId = button.dataset.markerId;
+                        const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
+                        if (existingMarker) {
+                            existingMarker.classList.toggle('locked');
+                        } else {
+                            createMarker(markerId);
                         }
-                    }
-                    updateCorrections();
+                    });
                 });
-            });
+
+                document.querySelectorAll('.radio-selector').forEach(radio => {
+                    radio.addEventListener('change', (event) => {
+                        document.querySelectorAll('.marker-btn').forEach(btn => {
+                            btn.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white');
+                            btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                        });
+                        if (event.target.checked) {
+                            const targetButtonId = event.target.dataset.targetButton;
+                            const targetButton = document.querySelector(`.marker-btn[data-marker-id="${targetButtonId}"]`);
+                            if (targetButton) {
+                                targetButton.classList.add('bg-yellow-400', 'border-yellow-500', 'text-white');
+                                targetButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                            }
+                            
+                            const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${targetButtonId}"]`);
+                            if (!existingMarker) {
+                                createMarker(targetButtonId);
+                            }
+                        }
+                        updateCorrections();
+                    });
+                });
+            }
+            
+            function generateMarkerButtons(count) {
+                markerButtonsWrapper.innerHTML = '';
+                let htmlContent = '';
+                for(let i = 1; i <= count; i++) {
+                    htmlContent += `
+                        <div class="flex flex-col items-center space-y-2">
+                            <button data-marker-id="F${i}" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F${i}</button>
+                            <div><input type="radio" name="marker-select" id="radio-F${i}" data-target-button="F${i}" class="radio-selector"><label for="radio-F${i}" class="radio-label"></label></div>
+                        </div>`;
+                }
+                htmlContent += `
+                    <div class="flex flex-col items-center space-y-2">
+                        <button data-marker-id="D" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">D</button>
+                        <div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div>
+                    </div>`;
+                markerButtonsWrapper.innerHTML = htmlContent;
+                addMarkerButtonListeners();
+            }
             
             function createMarker(id) {
                 const marker = document.createElement('div');
@@ -474,6 +569,8 @@
                 correctionsText.innerHTML = '';
                 sendToScreenBtn.classList.add('hidden');
 
+                const pixelToMmRatio = parseFloat(pixelToMmRatioInput.value) || 1;
+
                 const selectedRadio = document.querySelector('.radio-selector:checked');
                 if (!selectedRadio) {
                     correctionsText.innerHTML = '<p class="text-gray-500">Sélectionnez une référence (couronne) pour voir les calculs.</p>';
@@ -499,8 +596,13 @@
                     const secondaryId = marker.dataset.markerId;
                     const secondaryX = parseFloat(marker.style.left);
                     const secondaryY = parseFloat(marker.style.top);
-                    const correctionX = mainX - secondaryX;
-                    const correctionY = mainY - secondaryY;
+                    
+                    const correctionX_px = mainX - secondaryX;
+                    const correctionY_px = mainY - secondaryY;
+
+                    const correctionX_mm = correctionX_px / pixelToMmRatio;
+                    const correctionY_mm = correctionY_px / pixelToMmRatio;
+
                     const resultLine = document.createElement('p');
                     
                     let displayName = secondaryId;
@@ -508,7 +610,7 @@
                         displayName = 'Die Cutter';
                     }
 
-                    resultLine.textContent = `${displayName} : Registre (${correctionY.toFixed(2)}px) / Centrage (${correctionX.toFixed(2)}px)`;
+                    resultLine.textContent = `${displayName} : Registre (${correctionY_mm.toFixed(2)}mm) / Centrage (${correctionX_mm.toFixed(2)}mm)`;
                     correctionsText.appendChild(resultLine);
                 });
                 sendToScreenBtn.classList.remove('hidden');
@@ -520,12 +622,12 @@
                 optionsModalBackdrop.classList.remove('hidden');
             });
 
-            function closeModal() {
-                optionsModal.classList.add('hidden');
-                optionsModalBackdrop.classList.add('hidden');
+            function closeModal(modal, backdrop) {
+                modal.classList.add('hidden');
+                backdrop.classList.add('hidden');
             }
-            closeModalBtn.addEventListener('click', closeModal);
-            optionsModalBackdrop.addEventListener('click', closeModal);
+            closeOptionsModalBtn.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
+            optionsModalBackdrop.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
 
             markerSizeSlider.addEventListener('input', (event) => {
                 const value = event.target.value;
@@ -534,66 +636,128 @@
             });
             
             function resetSession() {
-                const allMarkers = document.querySelectorAll('.draggable-marker');
-                if (allMarkers.length > 0) {
-                    allMarkers.forEach(marker => marker.remove());
-                }
-                markerButtons.forEach(btn => {
+                document.querySelectorAll('.draggable-marker').forEach(marker => marker.remove());
+                document.querySelectorAll('.marker-btn').forEach(btn => {
                     btn.classList.remove('ring-2', 'active-marker-ring', 'bg-yellow-400', 'border-yellow-500', 'text-white');
                     btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
                 });
-                radioSelectors.forEach(radio => radio.checked = false);
+                document.querySelectorAll('.radio-selector').forEach(radio => radio.checked = false);
                 lastSelectedMarker = null;
                 updateCorrections();
             }
             trashCan.addEventListener('click', resetSession);
 
-            // --- Logique de la modale de confirmation ---
             sendToScreenBtn.addEventListener('click', () => {
-                // Griser le bouton "Arrêter la saisie" à l'ouverture
                 stopInputBtn.disabled = true;
                 confirmationModal.classList.remove('hidden');
                 confirmationModalBackdrop.classList.remove('hidden');
             });
 
-            function closeConfirmationModal() {
-                confirmationModal.classList.add('hidden');
-                confirmationModalBackdrop.classList.add('hidden');
-            }
-
-            cancelSendBtn.addEventListener('click', closeConfirmationModal);
-            confirmationModalBackdrop.addEventListener('click', closeConfirmationModal);
+            cancelSendBtn.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
+            confirmationModalBackdrop.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
 
             confirmSendBtn.addEventListener('click', () => {
-                // Ne PAS fermer la modale
-                // Activer le bouton "Arrêter la saisie"
                 stopInputBtn.disabled = false;
-                
-                console.log('Valeurs envoyées !'); // Action simulée
-                
-                // Donner le retour visuel sur le bouton principal
                 sendToScreenBtn.textContent = 'Envoyé !';
-                sendToScreenBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                sendToScreenBtn.classList.add('bg-green-500');
-                
+                sendToScreenBtn.classList.replace('bg-indigo-600', 'bg-green-500');
+                sendToScreenBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
                 setTimeout(() => {
                     sendToScreenBtn.textContent = "Envoyer à l'écran";
-                    sendToScreenBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    sendToScreenBtn.classList.remove('bg-green-500');
+                     sendToScreenBtn.classList.replace('bg-green-500', 'bg-indigo-600');
+                     sendToScreenBtn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700');
                 }, 2000);
             });
             
             stopInputBtn.addEventListener('click', () => {
-                if (stopInputBtn.disabled) return; // Sécurité supplémentaire
-                
-                // On ferme la modale D'ABORD
-                closeConfirmationModal();
-                
+                if (stopInputBtn.disabled) return;
+                closeModal(confirmationModal, confirmationModalBackdrop);
                 console.log('Saisie arrêtée.');
-                
-                // Ensuite, on réinitialise la session
-                resetSession();
             });
+
+            // --- Logique Paramètres & Mot de Passe ---
+            openSettingsBtn.addEventListener('click', () => {
+                closeModal(optionsModal, optionsModalBackdrop);
+                passwordError.textContent = '';
+                passwordInput.value = '';
+                passwordModal.classList.remove('hidden');
+                passwordModalBackdrop.classList.remove('hidden');
+            });
+
+            cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
+            submitPasswordBtn.addEventListener('click', () => {
+                if (passwordInput.value === 'ERadmin!') {
+                    closeModal(passwordModal, passwordModalBackdrop);
+                    settingsModal.classList.remove('hidden');
+                    settingsModalBackdrop.classList.remove('hidden');
+                } else {
+                    passwordError.textContent = 'Mot de passe incorrect.';
+                }
+            });
+            closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
+
+            machineNameInput.addEventListener('input', (e) => {
+                machineNameDisplay.textContent = e.target.value || 'nom de la machine';
+            });
+            
+            flexoCountSlider.addEventListener('input', (e) => {
+                const count = e.target.value;
+                flexoCountValue.textContent = count;
+                resetSession();
+                generateMarkerButtons(count);
+            });
+            
+            pixelToMmRatioInput.addEventListener('input', updateCorrections);
+            
+            bluetoothDeviceNameInput.addEventListener('input', (e) => {
+                btDeviceName = e.target.value;
+            });
+
+            // --- Logique Bluetooth ---
+            bluetoothSearchBtn.addEventListener('click', async () => {
+                if (connectedDevice) {
+                    connectedDevice.gatt.disconnect();
+                    return;
+                }
+                if (!btDeviceName) {
+                    alert("Veuillez d'abord renseigner le nom de l'appareil Bluetooth dans les paramètres.");
+                    return;
+                }
+                 if (!navigator.bluetooth) {
+                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur.");
+                    return;
+                }
+
+                try {
+                    console.log(`Recherche de l'appareil: ${btDeviceName}`);
+                    const device = await navigator.bluetooth.requestDevice({
+                        filters: [{ name: btDeviceName }],
+                        optionalServices: ['battery_service', 'device_information'] 
+                    });
+
+                    console.log('Appareil trouvé:', device.name);
+                    connectedDevice = device;
+                    connectedDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                    
+                    const server = await connectedDevice.gatt.connect();
+                    console.log('Connecté au serveur GATT:', server);
+
+                    bluetoothStatus.classList.replace('bg-red-500', 'bg-green-500');
+                    bluetoothBtnText.textContent = device.name;
+                    alert(`Connecté à ${device.name}`);
+
+                } catch(error) {
+                    console.error('Erreur Bluetooth:', error);
+                    alert(`Erreur: ${error.message}`);
+                }
+            });
+
+            function onDisconnected() {
+                console.log('Appareil déconnecté.');
+                bluetoothStatus.classList.replace('bg-green-500', 'bg-red-500');
+                bluetoothBtnText.textContent = 'Rechercher via Bluetooth';
+                connectedDevice = null;
+                alert('Appareil déconnecté.');
+            }
 
 
             function calculateScale(value) {
@@ -692,14 +856,11 @@
                         }
                     }
 
-                    // Réinitialise la position des outils
                     resetToolPositions();
-
                     if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
                     magnifierHideTimer = setTimeout(() => {
                         magnifierGlass.classList.add('hidden');
                     }, 3000);
-                    
                     trashCan.classList.remove('hovering');
                     updateCorrections();
                 }
@@ -725,61 +886,37 @@
                 activeMarker.style.left = `${markerX}px`;
                 activeMarker.style.top = `${markerY}px`;
                 updateMagnifier(cursorX_on_image, cursorY_on_image);
-
                 const markerRect = activeMarker.getBoundingClientRect();
-                
-                // --- Gestion Intelligente des Outils ---
                 handleToolRepositioning(markerRect);
             }
 
-            // --- NOUVELLES FONCTIONS D'AIDE ---
-            
-            // Fonction pour vérifier la collision entre deux rectangles
             function checkCollision(rect1, rect2) {
                 return !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
             }
             
-            // Fonction pour réinitialiser la position des outils
             function resetToolPositions() {
                 magnifierGlass.style.top = '10px';
                 magnifierGlass.style.bottom = 'auto';
                 magnifierGlass.style.right = '10px';
                 magnifierGlass.style.left = 'auto';
-
                 dpadControls.style.top = 'auto';
                 dpadControls.style.bottom = '0.5rem';
                 dpadControls.style.right = '0.5rem';
                 dpadControls.style.left = 'auto';
             }
 
-            // Gère le repositionnement de la loupe et du D-pad
             function handleToolRepositioning(markerRect) {
                  const containerRect = imageContainer.getBoundingClientRect();
                  const margin = 10;
-
-                // Définir les zones par défaut des outils par rapport au conteneur
-                const glassDefaultRect = {
-                    top: containerRect.top + margin,
-                    left: containerRect.right - 150 - margin,
-                    width: 150, height: 150
-                };
+                const glassDefaultRect = { top: containerRect.top + margin, left: containerRect.right - 150 - margin, width: 150, height: 150 };
                 glassDefaultRect.right = glassDefaultRect.left + 150;
                 glassDefaultRect.bottom = glassDefaultRect.top + 150;
-
-                const dpadDefaultRect = {
-                    top: containerRect.bottom - 96 - margin,
-                    left: containerRect.right - 96 - margin,
-                    width: 96, height: 96
-                };
+                const dpadDefaultRect = { top: containerRect.bottom - 96 - margin, left: containerRect.right - 96 - margin, width: 96, height: 96 };
                 dpadDefaultRect.right = dpadDefaultRect.left + 96;
                 dpadDefaultRect.bottom = dpadDefaultRect.top + 96;
-
-                // Gérer la poubelle
                 const trashRect = trashCan.getBoundingClientRect();
                 trashCan.classList.toggle('hovering', checkCollision(markerRect, trashRect));
 
-
-                // Gérer la loupe
                 if (checkCollision(markerRect, glassDefaultRect)) {
                     magnifierGlass.style.right = 'auto';
                     magnifierGlass.style.left = '10px';
@@ -788,23 +925,18 @@
                     magnifierGlass.style.right = '10px';
                 }
                 
-                // Gérer le D-Pad
                 if (checkCollision(markerRect, dpadDefaultRect)) {
                     const obstacles = [
                         magnifierGlass.getBoundingClientRect(),
                         trashCan.getBoundingClientRect(),
                         ...Array.from(document.querySelectorAll('.draggable-marker:not([data-marker-id="' + activeMarker.dataset.markerId + '"])')).map(m => m.getBoundingClientRect())
                     ];
-
                     const safeCorner = findSafeCorner(dpadControls, obstacles);
-                    
-                    // Appliquer la nouvelle position
                     dpadControls.style.top = safeCorner.top;
                     dpadControls.style.bottom = safeCorner.bottom;
                     dpadControls.style.left = safeCorner.left;
                     dpadControls.style.right = safeCorner.right;
                 } else {
-                    // Revenir à la position par défaut
                     resetDpadPosition();
                 }
             }
@@ -816,20 +948,15 @@
                 dpadControls.style.right = '0.5rem';
             }
 
-
-            // Trouve un coin sûr pour un élément
             function findSafeCorner(element, obstacles) {
                 const elRect = element.getBoundingClientRect();
                 const containerRect = imageContainer.getBoundingClientRect();
-                const margin = 8; // 0.5rem
-
-                // Liste des coins possibles [bottom-left, top-right, top-left] - on exclut bottom-right qui est la position par défaut
+                const margin = 8;
                 const corners = [
                     { bottom: `${margin}px`, left: `${margin}px`, top: 'auto', right: 'auto' },
                     { top: `${margin}px`, right: `${margin}px`, bottom: 'auto', left: 'auto' },
                     { top: `${margin}px`, left: `${margin}px`, bottom: 'auto', right: 'auto' }
                 ];
-                
                 for (const corner of corners) {
                     let potentialRect = {
                         width: elRect.width,
@@ -839,7 +966,6 @@
                     };
                     potentialRect.right = potentialRect.left + potentialRect.width;
                     potentialRect.bottom = potentialRect.top + potentialRect.height;
-                    
                     let isSafe = true;
                     for (const obstacle of obstacles) {
                         if (checkCollision(potentialRect, obstacle)) {
@@ -849,11 +975,13 @@
                     }
                     if (isSafe) return corner;
                 }
-                
-                // Par défaut, si aucun n'est sûr, on retourne le premier coin testé.
                 return corners[0];
             }
 
+            // --- Initialisation ---
+            generateMarkerButtons(6);
+            machineNameInput.value = 'nom de la machine';
+            pixelToMmRatioInput.value = '10';
 
             document.addEventListener('mouseup', dragEnd);
             document.addEventListener('touchend', dragEnd);
