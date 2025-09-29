@@ -471,7 +471,6 @@
             const importConfigBtn = document.getElementById('importConfigBtn');
             const exportConfigBtn = document.getElementById('exportConfigBtn');
             const configFileUpload = document.getElementById('configFileUpload');
-
             
             // --- Modale Éditeur de Séquence ---
             const openSequenceEditorBtn = document.getElementById('openSequenceEditorBtn');
@@ -572,8 +571,15 @@
             function loadState() {
                 const savedState = localStorage.getItem('easyRegisterState');
                 if (savedState) {
-                    const config = JSON.parse(savedState);
-                    applyConfig(config);
+                    try {
+                        const config = JSON.parse(savedState);
+                        applyConfig(config);
+                    } catch (e) {
+                        console.error("Erreur lors du chargement de la configuration sauvegardée:", e);
+                        const initialFlexoCount = 6;
+                        generateMarkerButtons(initialFlexoCount);
+                        initializeDefaultSequence(initialFlexoCount);
+                    }
                 } else {
                     const initialFlexoCount = 6;
                     generateMarkerButtons(initialFlexoCount);
@@ -1396,6 +1402,7 @@
             if (!sequence || sequence.length === 0) {
                  initializeDefaultSequence(initialFlexoCount);
             }
+            
             machineNameInput.value = machineNameDisplay.textContent;
 
             document.addEventListener('mouseup', dragEnd);
