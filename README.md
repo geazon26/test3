@@ -1135,7 +1135,11 @@
 
                 } catch(error) {
                     console.error('Erreur Bluetooth:', error);
-                    alert(`Erreur: ${error.message}`);
+                    if (error.name === 'SecurityError') {
+                        alert("Erreur de permission Bluetooth : Cet environnement ne permet pas l'accès au Bluetooth. Veuillez essayer d'exécuter ce fichier sur un serveur local ou dans un autre navigateur pour utiliser cette fonctionnalité.");
+                    } else {
+                        alert(`Erreur Bluetooth: ${error.message}`);
+                    }
                 }
             });
 
