@@ -11,7 +11,6 @@
         }
         body {
             font-family: sans-serif;
-            touch-action: none; /* Empêche le pinch-to-zoom sur la page entière */
         }
         /* Conteneur pour l'image et les croix */
         #imageContainer {
@@ -1728,8 +1727,4 @@
 
 </body>
 </html>
-
-
-
-
 
