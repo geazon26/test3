@@ -120,7 +120,8 @@
             z-index: 10;
             background-repeat: no-repeat;
             background-color: white;
-            /* La position est maintenant gérée par JS */
+            top: 0.5rem;
+            right: 0.5rem;
         }
         .magnifier-crosshair-h, .magnifier-crosshair-v {
             position: absolute;
@@ -1232,6 +1233,69 @@
                 magnifierGlass.style.backgroundPosition = `${bgX}px ${bgY}px`;
             }
 
+            function resetMagnifierPosition() {
+                magnifierGlass.style.top = '0.5rem';
+                magnifierGlass.style.right = '0.5rem';
+                magnifierGlass.style.left = 'auto';
+                magnifierGlass.style.bottom = 'auto';
+            }
+
+            function handleMagnifierRepositioning(markerRect) {
+                const containerRect = imageContainer.getBoundingClientRect();
+                const margin = 8; // 0.5rem
+                const glassWidth = 150;
+                const glassHeight = 150;
+
+                const corners = {
+                    topRight: {
+                        style: { top: `${margin}px`, right: `${margin}px`, left: 'auto', bottom: 'auto' },
+                        rect: { top: margin, left: containerRect.width - glassWidth - margin, width: glassWidth, height: glassHeight }
+                    },
+                    topLeft: {
+                        style: { top: `${margin}px`, left: `${margin}px`, right: 'auto', bottom: 'auto' },
+                        rect: { top: margin, left: margin, width: glassWidth, height: glassHeight }
+                    },
+                    bottomRight: {
+                        style: { bottom: `${margin}px`, right: `${margin}px`, top: 'auto', left: 'auto' },
+                        rect: { top: containerRect.height - glassHeight - margin, left: containerRect.width - glassWidth - margin, width: glassWidth, height: glassHeight }
+                    },
+                    bottomLeft: {
+                        style: { bottom: `${margin}px`, left: `${margin}px`, top: 'auto', right: 'auto' },
+                        rect: { top: containerRect.height - glassHeight - margin, left: margin, width: glassWidth, height: glassHeight }
+                    }
+                };
+                
+                for (const key in corners) {
+                    corners[key].rect.right = corners[key].rect.left + corners[key].rect.width;
+                    corners[key].rect.bottom = corners[key].rect.top + corners[key].rect.height;
+                }
+
+                const relativeMarkerRect = {
+                    top: markerRect.top - containerRect.top,
+                    left: markerRect.left - containerRect.left,
+                    width: markerRect.width,
+                    height: markerRect.height
+                };
+                relativeMarkerRect.right = relativeMarkerRect.left + relativeMarkerRect.width;
+                relativeMarkerRect.bottom = relativeMarkerRect.top + relativeMarkerRect.height;
+
+                const topRightObstructed = checkCollision(relativeMarkerRect, corners.topRight.rect);
+                
+                let chosenCorner = corners.topRight;
+
+                if (topRightObstructed) {
+                    if (!checkCollision(relativeMarkerRect, corners.topLeft.rect)) {
+                        chosenCorner = corners.topLeft;
+                    } else if (!checkCollision(relativeMarkerRect, corners.bottomRight.rect)) {
+                        chosenCorner = corners.bottomRight;
+                    } else {
+                        chosenCorner = corners.bottomLeft;
+                    }
+                }
+                
+                Object.assign(magnifierGlass.style, chosenCorner.style);
+            }
+
             function moveLastMarker(dx, dy) {
                 if (!lastSelectedMarker || lastSelectedMarker.classList.contains('locked')) return;
                 if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
@@ -1249,36 +1313,12 @@
                 
                 magnifierGlass.classList.remove('hidden');
                 updateMagnifier(x_on_image, y_on_image);
-                positionMagnifierNextTo(lastSelectedMarker);
+                handleMagnifierRepositioning(lastSelectedMarker.getBoundingClientRect());
 
                 magnifierHideTimer = setTimeout(() => {
                     magnifierGlass.classList.add('hidden');
                 }, 3000);
                 updateCorrections();
-            }
-
-            function positionMagnifierNextTo(element) {
-                const markerRect = element.getBoundingClientRect();
-                const containerRect = imageContainer.getBoundingClientRect();
-                const offsetX = 20;
-                const offsetY = 20;
-
-                let magnifierX = (markerRect.left - containerRect.left + markerRect.width / 2) + offsetX;
-                let magnifierY = (markerRect.top - containerRect.top + markerRect.height / 2) + offsetY;
-
-                const glassWidth = magnifierGlass.offsetWidth;
-                const glassHeight = magnifierGlass.offsetHeight;
-                if (magnifierX + glassWidth > containerRect.width) {
-                    magnifierX = (markerRect.left - containerRect.left + markerRect.width / 2) - glassWidth - offsetX;
-                }
-                if (magnifierY + glassHeight > containerRect.height) {
-                    magnifierY = (markerRect.top - containerRect.top + markerRect.height / 2) - glassHeight - offsetY;
-                }
-                
-                magnifierGlass.style.left = `${magnifierX}px`;
-                magnifierGlass.style.top = `${magnifierY}px`;
-                magnifierGlass.style.right = 'auto';
-                magnifierGlass.style.bottom = 'auto';
             }
 
 
@@ -1325,6 +1365,7 @@
                     }
 
                     resetToolPositions();
+                    resetMagnifierPosition();
                     if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
                     magnifierHideTimer = setTimeout(() => {
                         magnifierGlass.classList.add('hidden');
@@ -1355,27 +1396,9 @@
                 activeMarker.style.top = `${markerY}px`;
                 updateMagnifier(cursorX_on_image, cursorY_on_image);
                 
-                const offsetX = 20;
-                const offsetY = 20;
-                let magnifierX = (clientX - containerRect.left) + offsetX;
-                let magnifierY = (clientY - containerRect.top) + offsetY;
-
-                const glassWidth = magnifierGlass.offsetWidth;
-                const glassHeight = magnifierGlass.offsetHeight;
-                if (magnifierX + glassWidth > containerRect.width) {
-                    magnifierX = (clientX - containerRect.left) - glassWidth - offsetX;
-                }
-                if (magnifierY + glassHeight > containerRect.height) {
-                    magnifierY = (clientY - containerRect.top) - glassHeight - offsetY;
-                }
-
-                magnifierGlass.style.left = `${magnifierX}px`;
-                magnifierGlass.style.top = `${magnifierY}px`;
-                magnifierGlass.style.right = 'auto';
-                magnifierGlass.style.bottom = 'auto';
-
                 const markerRect = activeMarker.getBoundingClientRect();
                 handleToolRepositioning(markerRect);
+                handleMagnifierRepositioning(markerRect);
             }
 
             function checkCollision(rect1, rect2) {
