@@ -4,102 +4,470 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Chargeur d'images avec Marqueurs</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* --- Variables et Styles Généraux --- */
         :root {
             --main-marker-color: #FF0000; /* Couleur par défaut (Rouge Vif) */
+            --color-primary: #3B82F6;
+            --color-primary-hover: #2563EB;
+            --color-secondary: #6B7280;
+            --color-secondary-hover: #4B5563;
+            --color-success: #10B981;
+            --color-success-hover: #059669;
+            --color-danger: #EF4444;
+            --color-danger-hover: #DC2626;
+            --color-info: #4F46E5;
+            --color-info-hover: #4338CA;
+            --color-text-dark: #1F2937;
+            --color-text-medium: #374151;
+            --color-text-light: #6B7280;
+            --color-bg-light: #F3F4F6;
+            --color-bg-white: #FFFFFF;
+            --color-border: #D1D5DB;
         }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: var(--color-bg-light);
+            color: var(--color-text-dark);
+            margin: 0;
+            padding: 1rem;
+            min-height: 100vh;
         }
-        /* Conteneur pour l'image et les croix */
+        
+        /* --- Conteneurs Principaux --- */
+        .main-container {
+            background-color: var(--color-bg-white);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 42rem;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        /* Style pour l'affichage initial (sans image) */
+        .main-container.no-image {
+             min-height: calc(100vh - 4rem); /* Prend de la hauteur pour que la marge auto fonctionne */
+             padding-top: 5rem;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-controls {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+
+        /* --- Typographie --- */
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-text-dark);
+            margin: 0 0 1.5rem 0;
+        }
+        h2 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--color-text-dark);
+            margin: 0;
+        }
+        p {
+            color: var(--color-text-light);
+            font-size: 0.875rem;
+        }
+        label, .label-text {
+            display: block;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-medium);
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- Boutons --- */
+        .btn {
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-bg-white);
+        }
+        .btn-primary { background-color: var(--color-primary); }
+        .btn-primary:hover { background-color: var(--color-primary-hover); }
+        .btn-secondary { background-color: var(--color-secondary); }
+        .btn-secondary:hover { background-color: var(--color-secondary-hover); }
+        .btn-success { background-color: var(--color-success); }
+        .btn-success:hover { background-color: var(--color-success-hover); }
+        .btn-danger { background-color: var(--color-danger); }
+        .btn-danger:hover { background-color: var(--color-danger-hover); }
+        .btn-info { background-color: var(--color-info); }
+        .btn-info:hover { background-color: var(--color-info-hover); }
+        .btn-light {
+            background-color: #E5E7EB;
+            color: var(--color-text-dark);
+        }
+        .btn-light:hover { background-color: #D1D5DB; }
+
+        .btn.full-width {
+            width: 100%;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* --- Modales --- */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--color-bg-white);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 50;
+            width: 90%;
+            max-width: 28rem;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--color-text-light);
+            cursor: pointer;
+            padding: 0;
+        }
+        .modal-close-btn:hover { color: var(--color-text-dark); }
+        .modal-body {
+            overflow-y: auto;
+            padding-right: 1rem;
+            flex-grow: 1;
+        }
+        .modal-body > * + * {
+            margin-top: 1.5rem;
+        }
+
+        /* --- Groupes d'éléments pour l'alignement --- */
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .button-group.centered {
+            justify-content: center;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+         .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+        .confirmation-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* --- Formulaires --- */
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 100%;
+            border: 1px solid var(--color-border);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 0.5rem;
+            background: #E5E7EB;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 50%;
+            background: var(--color-primary);
+        }
+        input[type="checkbox"] {
+            height: 1.25rem;
+            width: 1.25rem;
+            border-radius: 0.25rem;
+            border-color: var(--color-border);
+            color: var(--color-info);
+        }
+
+        /* --- Composants Spécifiques --- */
+        .hidden { display: none !important; }
+        
+        #imageDisplayArea {
+            margin-top: 2rem;
+        }
+        #imagePreview {
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        #controlsContainer {
+            margin-top: 1.5rem;
+        }
+        #controlsContainer p {
+            margin-bottom: 0.75rem;
+        }
+        #marker-buttons-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .marker-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .marker-btn {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background-color: #E5E7EB;
+            color: var(--color-text-dark);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .marker-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .marker-btn.active-marker-highlight {
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--main-marker-color);
+        }
+        .marker-btn.reference {
+             background-color: #FBBF24;
+             border-color: #F59E0B;
+             color: white;
+        }
+        .marker-btn.reference:hover {
+             background-color: #F59E0B;
+        }
+
+
+        #correctionsContainer {
+            margin-top: 1.5rem;
+            text-align: left;
+            background-color: #F9FAFB;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #E5E7EB;
+        }
+        #correctionsText {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.875rem;
+        }
+        #sendToScreenBtn {
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        #settingsModal {
+            max-width: 32rem;
+            height: 83.333%;
+            display: flex;
+            flex-direction: column;
+        }
+        #settingsModal.hidden { display: none; }
+
+        /* --- Palette de couleurs (Options) --- */
+        #color-palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+            justify-items: center;
+        }
+        .color-swatch {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s ease-in-out, border-color 0.1s ease-in-out;
+        }
+        .color-swatch.selected {
+            border-color: #3b82f6;
+            transform: scale(1.15);
+        }
+
+        /* --- Éditeur de Séquence --- */
+        #sequenceEditorModal {
+            max-width: 42rem;
+            height: 83.333%;
+            display: flex;
+            flex-direction: column;
+        }
+        #sequenceEditorModal.hidden { display: none; }
+        #sequence-fields-container {
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        #sequence-fields-container > * + * { margin-top: 0.5rem; }
+        .sequence-action-item {
+            padding: 0.5rem;
+            border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            background-color: var(--color-bg-white);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .sequence-action-item.dragging {
+            opacity: 0.5;
+            background: #e0e7ff;
+        }
+        .sequence-action-item.drag-over {
+            border-top: 2px solid #4f46e5;
+        }
+        .sequence-action-item input[type="text"] {
+            flex-grow: 1;
+            font-weight: 600;
+            border: none;
+            border-bottom: 1px solid transparent;
+            padding: 0.25rem;
+        }
+         .sequence-action-item input[type="text"]:not(:disabled) {
+             border-bottom: 1px solid var(--color-border);
+         }
+        .sequence-action-item input[type="text"]:disabled {
+            background-color: #F9FAFB;
+        }
+        .sequence-action-item input[type="number"] {
+            width: 5rem;
+        }
+        .sequence-action-item .drag-handle {
+            cursor: move;
+            color: var(--color-text-light);
+        }
+        .sequence-action-item .delete-btn {
+            background: none; border: none; color: var(--color-danger); font-weight: bold; font-size: 1.25rem; cursor: pointer;
+        }
+        .modal-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-border);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* --- Styles existants pour les marqueurs (conservés et adaptés) --- */
         #imageContainer {
             position: relative;
-            display: inline-block; /* S'ajuste à la taille de l'image */
+            display: inline-block;
             max-width: 100%;
         }
-        /* Style pour le marqueur déplaçable (croix + texte) */
         .draggable-marker {
             position: absolute;
             cursor: move;
-            user-select: none; /* Empêche la sélection du texte pendant le glissement */
+            user-select: none;
             -webkit-user-select: none;
-            /* Centre le marqueur sur le point de positionnement et permet le changement de taille */
             transform: translate(-50%, -50%); 
             transform-origin: center center;
             transition: transform 0.1s ease-out, color 0.2s, background-color 0.2s;
-            width: 24px; /* Taille explicite pour la croix */
+            width: 24px;
             height: 24px;
             z-index: 5;
         }
-        .draggable-marker.locked {
-            cursor: default;
-        }
-        /* La croix géométrique à l'intérieur du marqueur */
+        .draggable-marker.locked { cursor: default; }
         .marker-cross-h, .marker-cross-v {
             position: absolute;
-            background-color: var(--main-marker-color); /* Utilise la variable de couleur */
-            box-shadow: 0 0 2px white; /* Contour blanc pour la lisibilité */
+            background-color: var(--main-marker-color);
+            box-shadow: 0 0 2px white;
         }
-        .marker-cross-h {
-            width: 100%;
-            height: 2px;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-        }
-        .marker-cross-v {
-            width: 2px;
-            height: 100%;
-            left: 50%;
-            top: 0;
-            transform: translateX(-50%);
-        }
+        .marker-cross-h { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+        .marker-cross-v { width: 2px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
         .marker-label {
-            /* On positionne le label de manière absolue pour ne pas affecter le centrage */
             position: absolute;
-            left: 100%; /* A droite de la croix */
-            top: 50%; /* Centré verticalement */
-            transform: translateY(-50%); /* Ajustement vertical final */
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
             font-size: 14px;
             padding-left: 5px;
             font-weight: 500;
-            white-space: nowrap; /* Empêche le nom de passer à la ligne */
-            color: var(--main-marker-color); /* Utilise la variable de couleur */
+            white-space: nowrap;
+            color: var(--main-marker-color);
             text-shadow: 0 0 3px white, 0 0 3px white;
         }
-        .draggable-marker.locked .marker-label {
-            display: none;
-        }
-        /* Classe pour le contour du bouton actif, utilisant la variable de couleur */
-        .active-marker-ring {
-             --tw-ring-color: var(--main-marker-color);
-        }
-        /* Cache le bouton radio par défaut */
-        .radio-selector {
-            display: none;
-        }
-        /* Style pour le label qui sert de bouton radio custom */
+        .draggable-marker.locked .marker-label { display: none; }
+        .radio-selector { display: none; }
         .radio-label {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 1.5rem; /* 24px */
-            height: 1.5rem; /* 24px */
-            border: 2px solid #9CA3AF; /* gray-400 */
-            border-radius: 9999px; /* full */
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #9CA3AF;
+            border-radius: 9999px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 1.25rem; /* Taille de l'émoji */
+            font-size: 1.25rem;
             line-height: 1;
         }
-        /* Style quand le bouton radio est sélectionné */
         .radio-selector:checked + .radio-label {
             background-color: transparent;
             border-color: transparent;
         }
-        /* L'émoji couronne qui apparaît */
         .radio-selector:checked + .radio-label::before {
             content: '👑';
             position: absolute;
@@ -108,161 +476,60 @@
             transform: translate(-50%, -50%);
         }
 
-        /* --- Style pour la loupe de zoom --- */
-        #magnifier-glass {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            border: 3px solid #000;
-            border-radius: 50%;
-            overflow: hidden;
-            pointer-events: none; /* Important! */
-            z-index: 10;
-            background-repeat: no-repeat;
-            background-color: white;
-            top: 0.5rem;
-            right: 0.5rem;
-        }
-        .magnifier-crosshair-h, .magnifier-crosshair-v {
-            position: absolute;
-            background-color: rgba(255, 0, 0, 0.7);
-            z-index: 11;
-        }
-        .magnifier-crosshair-h {
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 1px;
-            transform: translateY(-50%);
-        }
-        .magnifier-crosshair-v {
-            left: 50%;
-            top: 0;
-            height: 100%;
-            width: 1px;
-            transform: translateX(-50%);
-        }
-        /* Styles pour la palette de couleurs */
-        .color-swatch {
-            transition: transform 0.1s ease-in-out, border-color 0.1s ease-in-out;
-        }
-        .color-swatch.selected {
-            border-color: #3b82f6; /* Anneau bleu pour indiquer la sélection */
-            transform: scale(1.15);
-        }
-        /* Style pour la poubelle */
-        #trashCan {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.5rem;
-            width: 3rem;
-            height: 3rem;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            transition: transform 0.2s, background-color 0.2s;
-            z-index: 6; /* Au-dessus des marqueurs */
-            cursor: pointer; /* Rendu cliquable */
-        }
-        #trashCan.hovering {
-            transform: scale(1.1);
-            background-color: #fecaca; /* red-200 */
-        }
-        /* Style pour la croix directionnelle (D-Pad) */
-        #dpad-controls {
-            position: absolute;
-            bottom: 0.5rem;
-            right: 0.5rem;
-            width: 6rem; /* 96px */
-            height: 6rem; /* 96px */
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr 1fr;
-            z-index: 7;
-            background-color: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            transition: background-color 0.2s, left 0.2s ease-in-out, right 0.2s ease-in-out, top 0.2s ease-in-out, bottom 0.2s ease-in-out;
-        }
-        .dpad-btn {
-            background-color: rgba(243, 244, 246, 0.8); /* gray-100 */
-            border: 1px solid rgba(209, 213, 219, 0.9); /* gray-300 */
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: #374151; /* gray-700 */
-            transition: background-color 0.15s;
-        }
-        .dpad-btn:active {
-            background-color: #d1d5db; /* gray-300 */
-        }
+        /* --- Loupe, Poubelle, D-Pad (conservés) --- */
+        #magnifier-glass { position: absolute; width: 150px; height: 150px; border: 3px solid #000; border-radius: 50%; overflow: hidden; pointer-events: none; z-index: 10; background-repeat: no-repeat; background-color: white; top: 0.5rem; right: 0.5rem; }
+        .magnifier-crosshair-h, .magnifier-crosshair-v { position: absolute; background-color: rgba(255, 0, 0, 0.7); z-index: 11; }
+        .magnifier-crosshair-h { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
+        .magnifier-crosshair-v { left: 50%; top: 0; height: 100%; width: 1px; transform: translateX(-50%); }
+        #trashCan { position: absolute; top: 0.5rem; left: 0.5rem; width: 3rem; height: 3rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s, background-color 0.2s; z-index: 6; cursor: pointer; }
+        #trashCan.hovering { transform: scale(1.1); background-color: #fecaca; }
+        #dpad-controls { position: absolute; bottom: 0.5rem; right: 0.5rem; width: 6rem; height: 6rem; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; z-index: 7; background-color: rgba(255, 255, 255, 0.5); border-radius: 50%; transition: background-color 0.2s, left 0.2s ease-in-out, right 0.2s ease-in-out, top 0.2s ease-in-out, bottom 0.2s ease-in-out; }
+        .dpad-btn { background-color: rgba(243, 244, 246, 0.8); border: 1px solid rgba(209, 213, 219, 0.9); font-size: 1.25rem; font-weight: bold; color: #374151; transition: background-color 0.15s; }
+        .dpad-btn:active { background-color: #d1d5db; }
         #dpad-up { grid-area: 1 / 2 / 2 / 3; border-radius: 10px 10px 0 0;}
         #dpad-left { grid-area: 2 / 1 / 3 / 2; border-radius: 10px 0 0 10px;}
         #dpad-right { grid-area: 2 / 3 / 3 / 4; border-radius: 0 10px 10px 0;}
         #dpad-down { grid-area: 3 / 2 / 4 / 3; border-radius: 0 0 10px 10px;}
-        
-        #up-arrow {
-            position: absolute;
-            top: 0.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 3rem;
-            height: 3rem;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        #up-arrow { position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%); width: 3rem; height: 3rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; z-index: 6; pointer-events: none; }
+    
+        #bluetoothSearchBtn {
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 6;
-            pointer-events: none;
+            gap: 0.5rem;
         }
 
-        .dragging {
-            opacity: 0.5;
-            background: #e0e7ff;
-        }
-
-        .drag-over {
-            border-top: 2px solid #4f46e5;
+        .options-wrapper {
+            margin-top: auto; /* Pousse le bouton en bas quand le conteneur est grand */
+            padding-top: 2rem; /* Ajoute de l'espace au-dessus quand le contenu est affiché */
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <div class="bg-white p-8 rounded-xl shadow-lg text-center max-w-2xl w-full">
-        <!-- Titre de l'application -->
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Easy Register (<span id="machineNameDisplay">nom de la machine</span>)</h1>
+    <div class="main-container no-image">
+        <h1>Easy Register (<span id="machineNameDisplay">nom de la machine</span>)</h1>
 
-        <!-- Conteneur pour les boutons du haut -->
-        <div class="flex justify-center items-center space-x-4 mb-6">
-            <label for="imageUpload" class="inline-block bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors duration-300 ease-in-out shadow-md">
+        <div class="header-controls">
+            <label for="imageUpload" class="btn btn-primary">
                 Sélectionner une image
             </label>
             <input type="file" id="imageUpload" class="hidden" accept="image/*">
-            <button id="optionsBtn" class="bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">Options</button>
         </div>
 
-        <!-- La zone où l'image et les marqueurs seront affichés, cachée par défaut -->
-        <div id="imageDisplayArea" class="mt-8 hidden">
+        <div id="imageDisplayArea" class="hidden">
             <div id="imageContainer">
-                <img id="imagePreview" alt="Aperçu de l'image" class="max-w-full mx-auto rounded-lg shadow-md"/>
-                <!-- La poubelle pour supprimer les marqueurs -->
+                <img id="imagePreview" alt="Aperçu de l'image"/>
                 <div id="trashCan">🗑️</div>
-                <!-- Flèche vers le haut -->
                 <div id="up-arrow" class="hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="height: 2rem; width: 2rem; color: #374151;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                     </svg>
                 </div>
-                 <!-- La loupe de zoom, cachée par défaut -->
                 <div id="magnifier-glass" class="hidden">
                     <div class="magnifier-crosshair-h"></div>
                     <div class="magnifier-crosshair-v"></div>
                 </div>
-                 <!-- La croix directionnelle (D-Pad) -->
                 <div id="dpad-controls">
                     <button id="dpad-up" class="dpad-btn">↑</button>
                     <button id="dpad-left" class="dpad-btn">←</button>
@@ -272,176 +539,176 @@
             </div>
         </div>
         
-        <!-- Conteneur pour les boutons, caché par défaut -->
-        <div id="controlsContainer" class="mt-6 hidden">
-             <p class="text-sm text-gray-600 mb-3">Cliquez pour ajouter/verrouiller une fléxo et définir la référence.</p>
-            <div id="marker-buttons-wrapper" class="flex justify-center items-start space-x-3 flex-wrap gap-y-2">
+        <div id="controlsContainer" class="hidden">
+             <p>Cliquez pour ajouter/verrouiller une fléxo et définir la référence.</p>
+            <div id="marker-buttons-wrapper">
                 <!-- Les boutons de marqueurs seront générés ici par le JS -->
             </div>
         </div>
         
-        <!-- Conteneur pour afficher les calculs de correction et le bouton d'envoi -->
-        <div id="correctionsContainer" class="mt-6 text-left bg-gray-50 p-4 rounded-lg border hidden">
-            <div id="correctionsText" class="text-sm font-mono">
+        <div id="correctionsContainer" class="hidden">
+            <div id="correctionsText">
                 <!-- Les résultats s'afficheront ici -->
             </div>
-            <button id="sendToScreenBtn" class="mt-4 w-full bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors">Envoyer à l'écran</button>
+            <button id="sendToScreenBtn" class="btn btn-info">Envoyer à l'écran</button>
+        </div>
+
+        <div class="options-wrapper">
+            <button id="optionsBtn" class="btn btn-secondary">Options</button>
         </div>
     </div>
 
     <!-- Fenêtre Modale pour les Options -->
-    <div id="optionsModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="optionsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800">Options</h2>
-            <button id="closeOptionsModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+    <div id="optionsModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="optionsModal" class="modal hidden">
+        <div class="modal-header">
+            <h2>Options</h2>
+            <button id="closeOptionsModalBtn" class="modal-close-btn">&times;</button>
         </div>
-        <div class="space-y-6">
+        <div class="modal-body">
             <div>
-                <label for="markerSizeSlider" class="block text-sm font-medium text-gray-700 mb-2">Taille des marqueurs: <span id="sliderValueSpan">5</span></label>
-                <input type="range" id="markerSizeSlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <label for="markerSizeSlider">Taille des marqueurs: <span id="sliderValueSpan">5</span></label>
+                <input type="range" id="markerSizeSlider" min="1" max="10" value="5">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Couleur des éléments</label>
-                <div id="color-palette" class="grid grid-cols-5 gap-3 justify-items-center">
+                <label>Couleur des éléments</label>
+                <div id="color-palette">
                     <!-- Les pastilles de couleur seront injectées ici par le JS -->
                 </div>
             </div>
              <div>
-                <button id="bluetoothSearchBtn" class="w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2">
+                <button id="bluetoothSearchBtn" class="btn btn-primary full-width">
                     <span id="bluetoothBtnText">Rechercher via Bluetooth</span>
-                    <span id="bluetoothStatus" class="w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span id="bluetoothStatus" style="width: 0.75rem; height: 0.75rem; background-color: var(--color-danger); border-radius: 9999px; border: 2px solid white;"></span>
                 </button>
             </div>
             <div>
-                <button id="openSettingsBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Paramètres</button>
+                <button id="openSettingsBtn" class="btn btn-light full-width">Paramètres</button>
             </div>
         </div>
     </div>
     
     <!-- Fenêtre Modale pour le Mot de Passe -->
-    <div id="passwordModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="passwordModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Accès aux Paramètres</h2>
-        <p class="text-gray-600 mb-4">Appuyez sur Entrée ou Valider pour continuer.</p>
-        <input type="password" id="passwordInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4">
-        <div class="flex justify-end space-x-3">
-            <button id="cancelPasswordBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-400">Annuler</button>
-            <button id="submitPasswordBtn" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">Valider</button>
+    <div id="passwordModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="passwordModal" class="modal hidden">
+        <h2 style="margin-bottom: 1rem;">Accès aux Paramètres</h2>
+        <p style="margin-bottom: 1rem;">Appuyez sur Entrée ou Valider pour continuer.</p>
+        <input type="password" id="passwordInput" style="margin-bottom: 1rem;">
+        <div class="modal-actions">
+            <button id="cancelPasswordBtn" class="btn btn-light">Annuler</button>
+            <button id="submitPasswordBtn" class="btn btn-primary">Valider</button>
         </div>
     </div>
 
     <!-- Fenêtre Modale pour les Paramètres -->
-    <div id="settingsModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="settingsModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-md h-5/6 flex flex-col">
-        <div class="flex justify-between items-center mb-4 flex-shrink-0">
-            <h2 class="text-xl font-bold text-gray-800">Paramètres</h2>
-            <button id="closeSettingsModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+    <div id="settingsModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-header flex-shrink-0">
+            <h2>Paramètres</h2>
+            <button id="closeSettingsModalBtn" class="modal-close-btn">&times;</button>
         </div>
-        <div class="space-y-6 overflow-y-auto pr-4 flex-grow">
+        <div class="modal-body">
             <div>
-                <label for="machineNameInput" class="block text-sm font-medium text-gray-700 mb-2">Nom de la machine</label>
-                <input type="text" id="machineNameInput" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <label for="machineNameInput">Nom de la machine</label>
+                <input type="text" id="machineNameInput">
             </div>
              <div>
-                <label for="flexoCountSlider" class="block text-sm font-medium text-gray-700 mb-2">Nombre de flexos (F): <span id="flexoCountValue">6</span></label>
-                <input type="range" id="flexoCountSlider" min="1" max="9" value="6" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <label for="flexoCountSlider">Nombre de flexos (F): <span id="flexoCountValue">6</span></label>
+                <input type="range" id="flexoCountSlider" min="1" max="9" value="6">
             </div>
             <div>
-                <label for="pixelToMmRatioInput" class="block text-sm font-medium text-gray-700 mb-2">Pixels par millimètre (px/mm)</label>
-                <input type="number" id="pixelToMmRatioInput" value="10" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <label for="pixelToMmRatioInput">Pixels par millimètre (px/mm)</label>
+                <input type="number" id="pixelToMmRatioInput" value="10">
             </div>
             <div>
-                <label for="bluetoothDeviceNameInput" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'appareil Bluetooth</label>
-                <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <label for="bluetoothDeviceNameInput">Nom de l'appareil Bluetooth</label>
+                <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Sauvegarde Automatique</label>
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="autoSaveCheckbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <label for="autoSaveCheckbox" class="text-sm text-gray-600">Sauvegarder l'image après envoi</label>
+                <label>Sauvegarde Automatique</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoSaveCheckbox">
+                    <label for="autoSaveCheckbox">Sauvegarder l'image après envoi</label>
                 </div>
-                <div class="mt-2">
-                     <button id="selectFolderBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Sélectionner un dossier</button>
-                     <p id="folderNameDisplay" class="text-xs text-gray-500 mt-1"></p>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Sauvegarde automatique avec croix</label>
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="autoSaveWithMarkersCheckbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <label for="autoSaveWithMarkersCheckbox" class="text-sm text-gray-600">Sauvegarder l'image avec les croix et le rapport</label>
-                </div>
-                <div class="mt-2">
-                     <button id="selectFolderWithMarkersBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Sélectionner un dossier</button>
-                     <p id="folderNameWithMarkersDisplay" class="text-xs text-gray-500 mt-1"></p>
+                <div style="margin-top: 0.5rem;">
+                     <button id="selectFolderBtn" class="btn btn-light full-width">Sélectionner un dossier</button>
+                     <p id="folderNameDisplay" style="font-size: 0.75rem; margin-top: 0.25rem;"></p>
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Gestion de la Configuration</label>
-                <div class="flex space-x-2">
-                    <button id="importConfigBtn" class="w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">Importer</button>
-                    <button id="exportConfigBtn" class="w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600">Exporter</button>
+                <label>Sauvegarde automatique avec croix</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoSaveWithMarkersCheckbox">
+                    <label for="autoSaveWithMarkersCheckbox">Sauvegarder l'image avec les croix et le rapport</label>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                     <button id="selectFolderWithMarkersBtn" class="btn btn-light full-width">Sélectionner un dossier</button>
+                     <p id="folderNameWithMarkersDisplay" style="font-size: 0.75rem; margin-top: 0.25rem;"></p>
+                </div>
+            </div>
+            <div>
+                <label>Gestion de la Configuration</label>
+                <div class="button-group">
+                    <button id="importConfigBtn" class="btn btn-primary full-width">Importer</button>
+                    <button id="exportConfigBtn" class="btn btn-success full-width">Exporter</button>
                 </div>
                 <input type="file" id="configFileUpload" class="hidden" accept=".json, .txt">
             </div>
             <div>
-                <button id="openSequenceEditorBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Éditeur de Séquence</button>
+                <button id="openSequenceEditorBtn" class="btn btn-light full-width">Éditeur de Séquence</button>
             </div>
         </div>
     </div>
     
     <!-- Fenêtre Modale pour l'Éditeur de Séquence -->
-    <div id="sequenceEditorModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="sequenceEditorModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-2xl h-5/6 flex flex-col">
-        <div class="flex justify-between items-center mb-4 flex-shrink-0">
-            <h2 class="text-xl font-bold text-gray-800">Éditeur de Séquence</h2>
-            <div>
-                <button id="addSequenceActionBtn" class="bg-blue-500 text-white rounded-full h-8 w-8 flex items-center justify-center hover:bg-blue-600 text-xl font-bold">+</button>
-            </div>
+    <div id="sequenceEditorModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="sequenceEditorModal" class="modal hidden">
+        <div class="modal-header">
+            <h2>Éditeur de Séquence</h2>
+            <button id="addSequenceActionBtn" class="btn-primary" style="border-radius: 9999px; height: 2rem; width: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; padding: 0;">+</button>
         </div>
-        <div id="sequence-fields-container" class="overflow-y-auto pr-2 space-y-2">
+        <div id="sequence-fields-container" class="modal-body">
              <!-- Les champs de coordonnées seront générés ici -->
         </div>
-        <div class="mt-4 pt-4 border-t flex-shrink-0 flex justify-end">
-             <button id="saveSequenceBtn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 flex items-center space-x-2">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <div class="modal-footer">
+             <button id="saveSequenceBtn" class="btn btn-success">
+                 <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.25rem; width: 1.25rem; vertical-align: middle; margin-right: 0.5rem;" viewBox="0 0 20 20" fill="currentColor">
                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293zM5 4a2 2 0 012-2h6a2 2 0 012 2v2a1 1 0 102 0V4a4 4 0 00-4-4H7a4 4 0 00-4 4v12a4 4 0 004 4h6a4 4 0 004-4v-2a1 1 0 10-2 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4z" />
                  </svg>
                  <span>Enregistrer</span>
                </button>
-             <button id="closeSequenceEditorBtn" class="ml-4 bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-400">Fermer</button>
+             <button id="closeSequenceEditorBtn" class="btn btn-light">Fermer</button>
         </div>
     </div>
     
     <!-- Fenêtre Modale pour l'affichage de la Séquence -->
-    <div id="sequenceDisplayModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="sequenceDisplayModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800">Séquence Générée</h2>
-            <button id="closeSequenceDisplayBtn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+    <div id="sequenceDisplayModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="sequenceDisplayModal" class="modal hidden" style="max-width: 32rem;">
+        <div class="modal-header">
+            <h2>Séquence Générée</h2>
+            <button id="closeSequenceDisplayBtn" class="modal-close-btn">&times;</button>
         </div>
-        <pre id="sequence-output" class="bg-gray-100 p-4 rounded text-left text-sm whitespace-pre-wrap h-64 overflow-y-auto"></pre>
+        <pre id="sequence-output" style="background-color: #F9FAFB; padding: 1rem; border-radius: 0.25rem; text-align: left; font-size: 0.875rem; white-space: pre-wrap; height: 16rem; overflow-y: auto;"></pre>
     </div>
 
-
     <!-- Fenêtre Modale de Confirmation -->
-    <div id="confirmationModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="confirmationModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl hidden z-50 w-full max-w-sm text-center">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">Confirmation</h2>
-        <p class="text-gray-600 mb-6">Êtes-vous sûr de vouloir envoyer ces valeurs à l'écran ?</p>
-        <div class="flex flex-col space-y-3">
-            <div class="flex justify-center space-x-4">
-                <button id="cancelSendBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors">Non</button>
-                <button id="confirmSendBtn" class="bg-green-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors">Oui</button>
+    <div id="confirmationModalBackdrop" class="modal-backdrop hidden"></div>
+    <div id="confirmationModal" class="modal hidden" style="max-width: 24rem; text-align: center;">
+        <h2 style="margin-bottom: 1rem;">Confirmation</h2>
+        <p style="margin-bottom: 1.5rem;">Êtes-vous sûr de vouloir envoyer ces valeurs à l'écran ?</p>
+        <div class="confirmation-actions">
+            <div class="button-group centered" style="gap: 1rem;">
+                <button id="cancelSendBtn" class="btn btn-light" style="padding-left: 1.5rem; padding-right: 1.5rem;">Non</button>
+                <button id="confirmSendBtn" class="btn btn-success" style="padding-left: 1.5rem; padding-right: 1.5rem;">Oui</button>
             </div>
-            <button id="stopInputBtn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Arrêter la saisie</button>
+            <button id="stopInputBtn" class="btn btn-danger">Arrêter la saisie</button>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- Récupération des éléments du DOM (partie 1) ---
+            const mainContainer = document.querySelector('.main-container');
             const imageUploadInput = document.getElementById('imageUpload');
             const imagePreviewElement = document.getElementById('imagePreview');
             const imageDisplayArea = document.getElementById('imageDisplayArea');
@@ -549,7 +816,7 @@
 
             colors.forEach((color, index) => {
                 const swatch = document.createElement('div');
-                swatch.className = 'color-swatch w-8 h-8 rounded-full cursor-pointer border-2 border-transparent';
+                swatch.className = 'color-swatch';
                 swatch.style.backgroundColor = color;
                 swatch.dataset.color = color;
                 if (index === 0) {
@@ -648,7 +915,8 @@
             });
 
             function setImageAsPreview(imageURL, blob) {
-                resetSession();
+                resetSession(true); // Passer true pour ne pas réinitialiser la mise en page
+                mainContainer.classList.remove('no-image');
                 imagePreviewElement.src = imageURL;
                  if (blob) {
                     imagePreviewElement.dataset.blob = URL.createObjectURL(blob); // Keep blob for saving
@@ -679,15 +947,13 @@
                 document.querySelectorAll('.radio-selector').forEach(radio => {
                     radio.addEventListener('change', (event) => {
                         document.querySelectorAll('.marker-btn').forEach(btn => {
-                            btn.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white');
-                            btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                            btn.classList.remove('reference');
                         });
                         if (event.target.checked) {
                             const targetButtonId = event.target.dataset.targetButton;
                             const targetButton = document.querySelector(`.marker-btn[data-marker-id="${targetButtonId}"]`);
                             if (targetButton) {
-                                targetButton.classList.add('bg-yellow-400', 'border-yellow-500', 'text-white');
-                                targetButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                                targetButton.classList.add('reference');
                             }
                             
                             const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${targetButtonId}"]`);
@@ -705,14 +971,14 @@
                 let htmlContent = '';
                 for(let i = 1; i <= count; i++) {
                     htmlContent += `
-                        <div class="flex flex-col items-center space-y-2">
-                            <button data-marker-id="F${i}" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">F${i}</button>
+                        <div class="marker-btn-container">
+                            <button data-marker-id="F${i}" class="marker-btn">F${i}</button>
                             <div><input type="radio" name="marker-select" id="radio-F${i}" data-target-button="F${i}" class="radio-selector"><label for="radio-F${i}" class="radio-label"></label></div>
                         </div>`;
                 }
                 htmlContent += `
-                    <div class="flex flex-col items-center space-y-2">
-                        <button data-marker-id="D" class="marker-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors">D</button>
+                    <div class="marker-btn-container">
+                        <button data-marker-id="D" class="marker-btn">D</button>
                         <div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div>
                     </div>`;
                 markerButtonsWrapper.innerHTML = htmlContent;
@@ -741,7 +1007,7 @@
                 
                 const correspondingButton = document.querySelector(`.marker-btn[data-marker-id="${id}"]`);
                 if (correspondingButton) {
-                   correspondingButton.classList.add('ring-2', 'ring-offset-2', 'active-marker-ring');
+                   correspondingButton.classList.add('active-marker-highlight');
                 }
                 updateCorrections();
             }
@@ -754,14 +1020,14 @@
 
                 const selectedRadio = document.querySelector('.radio-selector:checked');
                 if (!selectedRadio) {
-                    correctionsText.innerHTML = '<p class="text-gray-500">Sélectionnez une référence pour voir les corrections.</p>';
+                    correctionsText.innerHTML = '<p>Sélectionnez une référence pour voir les corrections.</p>';
                     correctionsContainer.classList.remove('hidden');
                     return;
                 }
                 const mainMarkerId = selectedRadio.dataset.targetButton;
                 const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${mainMarkerId}"]`);
                 if (!mainMarker) {
-                    correctionsText.innerHTML = `<p class="text-gray-500">Ajoutez le marqueur de référence ${mainMarkerId} sur l'image.</p>`;
+                    correctionsText.innerHTML = `<p>Ajoutez le marqueur de référence ${mainMarkerId} sur l'image.</p>`;
                     correctionsContainer.classList.remove('hidden');
                     return;
                 }
@@ -769,7 +1035,7 @@
                 const mainY = parseFloat(mainMarker.style.top);
                 const otherMarkers = document.querySelectorAll('.draggable-marker:not([data-marker-id="' + mainMarkerId + '"])');
                 if (otherMarkers.length === 0) {
-                     correctionsText.innerHTML = '<p class="text-gray-500">Ajoutez d\'autres marqueurs pour calculer les corrections.</p>';
+                     correctionsText.innerHTML = '<p>Ajoutez d\'autres marqueurs pour calculer les corrections.</p>';
                      correctionsContainer.classList.remove('hidden');
                      return;
                 }
@@ -798,15 +1064,16 @@
                 correctionsContainer.classList.remove('hidden');
             }
 
-            optionsBtn.addEventListener('click', () => {
-                optionsModal.classList.remove('hidden');
-                optionsModalBackdrop.classList.remove('hidden');
-            });
-
+            function showModal(modal, backdrop) {
+                modal.classList.remove('hidden');
+                backdrop.classList.remove('hidden');
+            }
             function closeModal(modal, backdrop) {
                 modal.classList.add('hidden');
                 backdrop.classList.add('hidden');
             }
+            
+            optionsBtn.addEventListener('click', () => showModal(optionsModal, optionsModalBackdrop));
             closeOptionsModalBtn.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
             optionsModalBackdrop.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
 
@@ -816,22 +1083,28 @@
                 updateMarkerSizes(value);
             });
             
-            function resetSession() {
+            function resetSession(keepLayout = false) {
                 document.querySelectorAll('.draggable-marker').forEach(marker => marker.remove());
                 document.querySelectorAll('.marker-btn').forEach(btn => {
-                    btn.classList.remove('ring-2', 'ring-offset-2', 'active-marker-ring', 'bg-yellow-400', 'border-yellow-500', 'text-white');
-                    btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                    btn.classList.remove('active-marker-highlight', 'reference');
                 });
                 document.querySelectorAll('.radio-selector').forEach(radio => radio.checked = false);
                 lastSelectedMarker = null;
                 updateCorrections();
+                
+                if (!keepLayout) {
+                    mainContainer.classList.add('no-image');
+                    imageDisplayArea.classList.add('hidden');
+                    controlsContainer.classList.add('hidden');
+                    correctionsContainer.classList.add('hidden');
+                    upArrow.classList.add('hidden');
+                }
             }
-            trashCan.addEventListener('click', resetSession);
+            trashCan.addEventListener('click', () => resetSession(false));
 
             sendToScreenBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = true;
-                confirmationModal.classList.remove('hidden');
-                confirmationModalBackdrop.classList.remove('hidden');
+                showModal(confirmationModal, confirmationModalBackdrop);
             });
 
             cancelSendBtn.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
@@ -844,13 +1117,14 @@
                 handleAutoSave();
                 handleAutoSaveWithMarkers();
                 
+                const originalText = sendToScreenBtn.textContent;
                 sendToScreenBtn.textContent = 'Envoyé !';
-                sendToScreenBtn.classList.replace('bg-indigo-600', 'bg-green-500');
-                sendToScreenBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
+                sendToScreenBtn.classList.remove('btn-info');
+                sendToScreenBtn.classList.add('btn-success');
                 setTimeout(() => {
-                    sendToScreenBtn.textContent = "Envoyer à l'écran";
-                     sendToScreenBtn.classList.replace('bg-green-500', 'bg-indigo-600');
-                     sendToScreenBtn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700');
+                    sendToScreenBtn.textContent = originalText;
+                    sendToScreenBtn.classList.remove('btn-success');
+                    sendToScreenBtn.classList.add('btn-info');
                 }, 2000);
             });
             
@@ -864,16 +1138,14 @@
             openSettingsBtn.addEventListener('click', () => {
                 closeModal(optionsModal, optionsModalBackdrop);
                 passwordInput.value = '';
-                passwordModal.classList.remove('hidden');
-                passwordModalBackdrop.classList.remove('hidden');
+                showModal(passwordModal, passwordModalBackdrop);
                 passwordInput.focus();
             });
             
             openSequenceEditorBtn.addEventListener('click', () => {
                 populateSequenceEditor();
                 closeModal(settingsModal, settingsModalBackdrop);
-                sequenceEditorModal.classList.remove('hidden');
-                sequenceEditorModalBackdrop.classList.remove('hidden');
+                showModal(sequenceEditorModal, sequenceEditorModalBackdrop);
             });
 
             closeSequenceEditorBtn.addEventListener('click', () => closeModal(sequenceEditorModal, sequenceEditorModalBackdrop));
@@ -881,12 +1153,18 @@
 
             async function checkPassword(inputPassword) {
                 const storedHash = '36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068'; // SHA-256 hash for " " (a single space)
-                const encoder = new TextEncoder();
-                const data = encoder.encode(inputPassword);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                return hashHex === storedHash;
+                try {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(inputPassword);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    return hashHex === storedHash;
+                } catch (e) {
+                    console.error("Crypto API non disponible:", e);
+                    alert("La vérification du mot de passe n'est pas possible dans ce contexte (non-sécurisé).");
+                    return false;
+                }
             }
 
             async function handlePasswordSubmit() {
@@ -894,26 +1172,18 @@
                     openSettings();
                 } else {
                     passwordInput.value = ''; // Clear incorrect password
-                    alert("Mot de passe incorrect.");
+                    // L'alerte est déjà dans checkPassword en cas d'échec
                 }
             }
             
             function openSettings() {
                 closeModal(passwordModal, passwordModalBackdrop);
-                settingsModal.classList.remove('hidden');
-                settingsModalBackdrop.classList.remove('hidden');
+                showModal(settingsModal, settingsModalBackdrop);
             }
 
             cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
-            
             submitPasswordBtn.addEventListener('click', handlePasswordSubmit);
-
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handlePasswordSubmit();
-                }
-            });
-
+            passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handlePasswordSubmit(); } });
             closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
 
             machineNameInput.addEventListener('input', (e) => {
@@ -971,38 +1241,37 @@
                 const isIntermediate = type === 'INTERMEDIATE_CLICK';
 
                 const element = document.createElement('div');
-                element.className = 'p-2 border rounded-md bg-white flex items-center space-x-2';
+                element.className = 'sequence-action-item';
                 element.dataset.actionId = id;
                 
                 let content = `
-                    <span class="cursor-move text-gray-400">⠿</span>
-                    <input type="text" value="${name}" class="flex-grow font-semibold border-b p-1">
+                    <span class="drag-handle">⠿</span>
+                    <input type="text" value="${name}" class="sequence-name-input">
                 `;
 
                 if (isIntermediate) {
                     content += `
-                        <div class="flex items-center space-x-1">
-                            <input type="number" placeholder="X" value="${x}" class="w-20 border rounded p-1">
-                            <input type="number" placeholder="Y" value="${y}" class="w-20 border rounded p-1">
+                        <div class="button-group" style="margin-left: auto;">
+                            <input type="number" placeholder="X" value="${x}" class="sequence-coord-input">
+                            <input type="number" placeholder="Y" value="${y}" class="sequence-coord-input">
                         </div>
-                        <button class="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                        <button class="delete-btn">&times;</button>
                     `;
                 } else {
-                     content += `<span class="text-sm text-gray-500 italic ml-auto">Saisie de valeur</span>`;
+                     content += `<span style="font-size: 0.875rem; color: var(--color-text-light); font-style: italic; margin-left: auto;">Saisie de valeur</span>`;
                 }
                 
                 element.innerHTML = content;
                 element.setAttribute('draggable', true);
                 
-                const nameInput = element.querySelector('input[type="text"]');
+                const nameInput = element.querySelector('.sequence-name-input');
                 if (isIntermediate) {
-                    element.querySelector('button').addEventListener('click', () => {
+                    element.querySelector('.delete-btn').addEventListener('click', () => {
                         sequence = sequence.filter(a => a.id !== id);
                         populateSequenceEditor();
                     });
                 } else {
                     nameInput.disabled = true;
-                    nameInput.classList.add('bg-gray-100');
                 }
                 return element;
             }
@@ -1012,9 +1281,9 @@
                 sequenceFieldsContainer.querySelectorAll('[data-action-id]').forEach(el => {
                     const id = el.dataset.actionId;
                     const originalAction = sequence.find(a => a.id === id);
-                    const name = el.querySelector('input[type="text"]').value;
-                    const xInput = el.querySelectorAll('input[type="number"]')[0];
-                    const yInput = el.querySelectorAll('input[type="number"]')[1];
+                    const name = el.querySelector('.sequence-name-input').value;
+                    const xInput = el.querySelectorAll('.sequence-coord-input')[0];
+                    const yInput = el.querySelectorAll('.sequence-coord-input')[1];
 
                     newSequence.push({ 
                         ...originalAction, 
@@ -1029,13 +1298,13 @@
                 // Visual feedback for save button
                 const saveText = saveSequenceBtn.querySelector('span');
                 const originalText = saveText.textContent;
-                saveSequenceBtn.classList.replace('bg-green-500', 'bg-blue-500');
-                saveSequenceBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-600');
+                saveSequenceBtn.classList.remove('btn-success');
+                saveSequenceBtn.classList.add('btn-primary');
                 saveText.textContent = "Enregistré !";
                 setTimeout(() => {
                     saveText.textContent = originalText;
-                    saveSequenceBtn.classList.replace('bg-blue-500', 'bg-green-500');
-                    saveSequenceBtn.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+                    saveSequenceBtn.classList.remove('btn-primary');
+                    saveSequenceBtn.classList.add('btn-success');
                 }, 1500);
             }
             
@@ -1148,8 +1417,7 @@
 
 
                 sequenceOutput.textContent = generatedSequence.join('\n');
-                sequenceDisplayModal.classList.remove('hidden');
-                sequenceDisplayModalBackdrop.classList.remove('hidden');
+                showModal(sequenceDisplayModal, sequenceDisplayModalBackdrop);
             }
 
 
@@ -1164,7 +1432,7 @@
                     return;
                 }
                  if (!navigator.bluetooth) {
-                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur.");
+                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur. Elle ne fonctionne que sur un site sécurisé (https).");
                     return;
                  }
 
@@ -1182,23 +1450,19 @@
                     const server = await connectedDevice.gatt.connect();
                     console.log('Connecté au serveur GATT:', server);
 
-                    bluetoothStatus.classList.replace('bg-red-500', 'bg-green-500');
+                    bluetoothStatus.style.backgroundColor = 'var(--color-success)';
                     bluetoothBtnText.textContent = device.name;
                     alert(`Connecté à ${device.name}`);
 
                 } catch(error) {
                     console.error('Erreur Bluetooth:', error);
-                    if (error.name === 'SecurityError') {
-                        alert("Erreur de permission Bluetooth : Cet environnement ne permet pas l'accès au Bluetooth. Veuillez essayer d'exécuter ce fichier sur un serveur local ou dans un autre navigateur pour utiliser cette fonctionnalité.");
-                    } else {
-                        alert(`Erreur Bluetooth: ${error.message}`);
-                    }
+                    alert(`Erreur Bluetooth: ${error.message}. Assurez-vous d'être sur une page sécurisée (https).`);
                 }
             });
 
             function onDisconnected() {
                 console.log('Appareil déconnecté.');
-                bluetoothStatus.classList.replace('bg-green-500', 'bg-red-500');
+                bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
                 bluetoothBtnText.textContent = 'Rechercher via Bluetooth';
                 connectedDevice = null;
                 alert('Appareil déconnecté.');
@@ -1242,7 +1506,7 @@
 
             function handleMagnifierRepositioning(markerRect) {
                 const containerRect = imageContainer.getBoundingClientRect();
-                const margin = 8; // 0.5rem
+                const margin = 8;
                 const glassWidth = 150;
                 const glassHeight = 150;
 
@@ -1353,13 +1617,12 @@
                         activeMarker.remove();
                         if (lastSelectedMarker === activeMarker) lastSelectedMarker = null;
                         const button = document.querySelector(`.marker-btn[data-marker-id="${markerId}"]`);
-                        if (button) button.classList.remove('ring-2', 'ring-offset-2');
+                        if (button) button.classList.remove('active-marker-highlight');
                         const radio = document.querySelector(`#radio-${markerId}`);
                         if (radio && radio.checked) {
                             radio.checked = false;
                             if (button) {
-                                button.classList.remove('bg-yellow-400', 'border-yellow-500', 'text-white');
-                                button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                                button.classList.remove('reference');
                             }
                         }
                     }
@@ -1522,7 +1785,7 @@
                 };
                 reader.onerror = () => alert("Erreur lors de la lecture du fichier.");
                 reader.readAsText(file);
-                event.target.value = ''; // Permet de ré-importer le même fichier
+                event.target.value = '';
             });
 
             // --- Logique pour le D-Pad ---
@@ -1572,7 +1835,7 @@
             selectFolderBtn.addEventListener('click', async () => {
                 try {
                     if (!window.showDirectoryPicker) {
-                        alert("Votre navigateur ne supporte pas la sélection de dossier. Cette fonctionnalité pourrait ne pas être disponible.");
+                        alert("Votre navigateur ne supporte pas la sélection de dossier. Cette fonctionnalité n'est disponible que sur un site sécurisé (https).");
                         return;
                     }
                     directoryHandle = await window.showDirectoryPicker();
@@ -1580,7 +1843,9 @@
                     folderNameDisplay.textContent = `Dossier : ${directoryHandle.name}`;
                     saveState();
                 } catch (err) {
-                    console.warn("Sélection de dossier annulée ou échouée:", err.name, err.message);
+                    if (err.name !== 'AbortError') {
+                        console.warn("Sélection de dossier échouée:", err.name, err.message);
+                    }
                 }
             });
             
@@ -1600,14 +1865,16 @@
                     folderNameWithMarkersDisplay.textContent = `Dossier : ${directoryHandleWithMarkers.name}`;
                     saveState();
                 } catch (err) {
-                    console.warn("Sélection de dossier (avec croix) annulée ou échouée:", err.name, err.message);
+                    if (err.name !== 'AbortError') {
+                        console.warn("Sélection de dossier (avec croix) échouée:", err.name, err.message);
+                    }
                 }
             });
 
             function getFormattedDateTime() {
                 const now = new Date();
                 const day = String(now.getDate()).padStart(2, '0');
-                const month = String(now.getMonth() + 1).padStart(2, '0'); // Les mois sont basés sur 0
+                const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -1617,7 +1884,6 @@
 
             async function handleAutoSave() {
                 if (!autoSaveEnabled || !directoryHandle || !imagePreviewElement.dataset.blob) {
-                    if(autoSaveEnabled && !directoryHandle) console.warn("Sauvegarde auto activée mais aucun dossier sélectionné.");
                     return;
                 }
 
@@ -1652,7 +1918,6 @@
             
             async function handleAutoSaveWithMarkers() {
                 if (!autoSaveWithMarkersEnabled || !directoryHandleWithMarkers || !imagePreviewElement.src || imagePreviewElement.src.endsWith('#')) {
-                    if(autoSaveWithMarkersEnabled && !directoryHandleWithMarkers) console.warn("Sauvegarde auto (avec croix) activée mais aucun dossier sélectionné.");
                     return;
                 }
 
@@ -1750,4 +2015,5 @@
 
 </body>
 </html>
+
 
