@@ -1228,50 +1228,59 @@
 
             function generateAndShowSequence() {
                 let generatedSequence = [];
-                const savedSequence = sequence || [];
-                const pixelToMmRatio = parseFloat(pixelToMmRatioInput.value) || 1;
-                
-                const selectedRadio = document.querySelector('.radio-selector:checked');
-                if (!selectedRadio) {
-                    alert("Please select a reference (crown).");
-                    return;
-                }
-                const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${selectedRadio.dataset.targetButton}"]`);
-                if (!mainMarker) {
-                    alert("Reference marker not found on the image.");
-                    return;
-                }
-
-                const mainX = parseFloat(mainMarker.style.left);
-                const mainY = parseFloat(mainMarker.style.top);
-                const activeMarkers = new Map();
-                document.querySelectorAll('.draggable-marker').forEach(m => activeMarkers.set(m.dataset.markerId, m));
-                
-                savedSequence.forEach(action => {
-                    if (action.type === 'INTERMEDIATE_CLICK') {
-                        if(action.x && action.y) generatedSequence.push(`CLIC,${action.x},${action.y}`);
-                    } else {
-                        const marker = activeMarkers.get(action.flexoId);
-                        if(marker && marker !== mainMarker) {
-                            const secondaryX = parseFloat(marker.style.left);
-                            const secondaryY = parseFloat(marker.style.top);
-                            const correctionY_mm = ((mainY - secondaryY) / pixelToMmRatio).toFixed(2);
-                            const correctionX_mm = ((mainX - secondaryX) / pixelToMmRatio).toFixed(2);
-                            
-                            if (action.type.includes('REG')) {
-                                generatedSequence.push(`ECRIRE,${correctionY_mm}`);
-                            }
-                            if (action.type.includes('CEN')) {
-                                generatedSequence.push(`ECRIRE,${correctionX_mm}`);
-                            }
-                        }
-                    }
-                });
-
-
+// ... existing code ... -->
                 sequenceOutput.textContent = generatedSequence.join('\n');
                 showModal(sequenceDisplayModal, sequenceDisplayModalBackdrop);
             }
+
+            async function connectToDevice(device) {
+                try {
+                    console.log(`Connecting to ${device.name}...`);
+                    bluetoothBtnText.textContent = `Connecting...`;
+                    
+                    device.addEventListener('gattserverdisconnected', onDisconnected);
+                    const server = await device.gatt.connect();
+                    
+                    console.log('Connected to GATT Server:', server);
+                    connectedDevice = device;
+
+                    bluetoothStatus.style.backgroundColor = 'var(--color-success)';
+                    bluetoothBtnText.textContent = device.name;
+                } catch(error) {
+                    console.error(`Failed to connect to ${device.name}:`, error);
+                    bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
+                    bluetoothBtnText.textContent = 'Search via Bluetooth';
+                    connectedDevice = null;
+                    // Avoid alert on auto-connect failures
+                }
+            }
+            
+            async function autoConnectBluetooth() {
+                if (!navigator.bluetooth || typeof navigator.bluetooth.getDevices !== 'function') {
+                    console.log("Web Bluetooth API or getDevices() not supported.");
+                    return;
+                }
+                if (!btDeviceName) {
+                    console.log("No Bluetooth device name saved in settings. Skipping auto-connect.");
+                    return;
+                }
+
+                try {
+                    console.log("Checking for previously permitted devices...");
+                    const devices = await navigator.bluetooth.getDevices();
+                    const matchingDevice = devices.find(device => device.name === btDeviceName);
+
+                    if (matchingDevice) {
+                        console.log(`Found permitted device: ${matchingDevice.name}. Attempting to auto-connect...`);
+                        await connectToDevice(matchingDevice);
+                    } else {
+                        console.log("No matching permitted device found for auto-connection.");
+                    }
+                } catch (error) {
+                    console.error("Error during Bluetooth auto-connect:", error);
+                }
+            }
+
 
             function onDisconnected() {
                 console.log('Device disconnected.');
@@ -1615,18 +1624,24 @@
                         const date = new Date();
                         const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
                         
-                        a.style.display = 'none'; // Hide the element
+                        // Visually hide the link for better compatibility on mobile
+                        a.style.position = 'absolute';
+                        a.style.left = '-10000px';
+                        a.style.top = '0px';
+
                         a.href = url;
                         a.download = `easy-register_${machineName}_${timestamp}.png`;
                         
                         document.body.appendChild(a);
                         a.click(); // This is now synchronous to the user's click on "Yes"
 
-                        // Clean up after a short delay to ensure download starts
+                        // Clean up after a longer delay to ensure download starts on slower devices
                         setTimeout(() => {
-                            document.body.removeChild(a);
+                            if (document.body.contains(a)) {
+                                document.body.removeChild(a);
+                            }
                             window.URL.revokeObjectURL(url);
-                        }, 100);
+                        }, 500);
 
                     } catch (e) {
                         console.error("Error saving image from blob:", e);
@@ -1745,26 +1760,21 @@
                  }
 
                 try {
-                    console.log(`Searching for device: ${btDeviceName}`);
+                    console.log(`Requesting device via search: ${btDeviceName}`);
                     const device = await navigator.bluetooth.requestDevice({
                         filters: [{ name: btDeviceName }],
                         optionalServices: ['battery_service', 'device_information'] 
                     });
 
-                    console.log('Device found:', device.name);
-                    connectedDevice = device;
-                    connectedDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                    
-                    const server = await connectedDevice.gatt.connect();
-                    console.log('Connected to GATT Server:', server);
-
-                    bluetoothStatus.style.backgroundColor = 'var(--color-success)';
-                    bluetoothBtnText.textContent = device.name;
-                    alert(`Connected to ${device.name}`);
+                    console.log('Device selected:', device.name);
+                    await connectToDevice(device);
 
                 } catch(error) {
-                    console.error('Bluetooth Error:', error);
-                    alert(`Bluetooth Error: ${error.message}. Make sure you are on a secure (https) page.`);
+                    console.error('Bluetooth search error:', error);
+                    // Avoid alerting on common "user cancelled" errors
+                    if (error.name !== 'NotFoundError') {
+                        alert(`Bluetooth Error: ${error.message}.`);
+                    }
                 }
             });
 
@@ -1859,11 +1869,11 @@
 
             // --- Initialization ---
             loadState();
+            autoConnectBluetooth();
             
         });
     </script>
 
 </body>
 </html>
-
 
