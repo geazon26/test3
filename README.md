@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>Chargeur d'images avec Marqueurs</title>
+    <title>Image Loader with Markers</title>
     <style>
-        /* --- Variables et Styles Généraux --- */
+        /* --- General Variables and Styles --- */
         :root {
-            --main-marker-color: #FF0000; /* Couleur par défaut (Rouge Vif) */
+            --main-marker-color: #FF0000; /* Default Color (Bright Red) */
             --color-primary: #3B82F6;
             --color-primary-hover: #2563EB;
             --color-secondary: #6B7280;
@@ -39,7 +39,7 @@
             min-height: 100vh;
         }
         
-        /* --- Conteneurs Principaux --- */
+        /* --- Main Containers --- */
         .main-container {
             background-color: var(--color-bg-white);
             padding: 2rem;
@@ -53,9 +53,9 @@
             text-align: center;
         }
         
-        /* Style pour l'affichage initial (sans image) */
+        /* Style for initial display (no image) */
         .main-container.no-image {
-             min-height: calc(100vh - 4rem); /* Prend de la hauteur pour que la marge auto fonctionne */
+             min-height: calc(100vh - 4rem); /* Takes up height so auto margin works */
              padding-top: 5rem;
         }
 
@@ -75,7 +75,7 @@
             z-index: 20;
         }
 
-        /* --- Typographie --- */
+        /* --- Typography --- */
         h1 {
             font-size: 1.5rem;
             font-weight: bold;
@@ -101,7 +101,7 @@
             margin-bottom: 0.5rem;
         }
 
-        /* --- Boutons --- */
+        /* --- Buttons --- */
         .btn {
             font-weight: 600;
             font-size: 0.875rem;
@@ -140,7 +140,7 @@
             cursor: not-allowed;
         }
 
-        /* --- Modales --- */
+        /* --- Modals --- */
         .modal-backdrop {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -185,7 +185,7 @@
             margin-top: 1.5rem;
         }
 
-        /* --- Groupes d'éléments pour l'alignement --- */
+        /* --- Element Groups for Alignment --- */
         .button-group {
             display: flex;
             gap: 0.5rem;
@@ -212,7 +212,7 @@
             gap: 0.75rem;
         }
 
-        /* --- Formulaires --- */
+        /* --- Forms --- */
         input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
             border: 1px solid var(--color-border);
@@ -243,7 +243,7 @@
             color: var(--color-info);
         }
 
-        /* --- Composants Spécifiques --- */
+        /* --- Specific Components --- */
         .hidden { display: none !important; }
         
         #imageDisplayArea {
@@ -328,7 +328,7 @@
         }
         #settingsModal.hidden { display: none; }
 
-        /* --- Palette de couleurs (Options) --- */
+        /* --- Color Palette (Options) --- */
         #color-palette {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -348,7 +348,7 @@
             transform: scale(1.15);
         }
 
-        /* --- Éditeur de Séquence --- */
+        /* --- Sequence Editor --- */
         #sequenceEditorModal {
             max-width: 42rem;
             height: 83.333%;
@@ -410,7 +410,7 @@
             gap: 0.75rem;
         }
 
-        /* --- Styles existants pour les marqueurs (conservés et adaptés) --- */
+        /* --- Existing Marker Styles (kept and adapted) --- */
         #imageContainer {
             position: relative;
             display: inline-block;
@@ -476,7 +476,7 @@
             transform: translate(-50%, -50%);
         }
 
-        /* --- Loupe, Poubelle, D-Pad (conservés) --- */
+        /* --- Magnifier, Trash, D-Pad (kept) --- */
         #magnifier-glass { position: absolute; width: 150px; height: 150px; border: 3px solid #000; border-radius: 50%; overflow: hidden; pointer-events: none; z-index: 10; background-repeat: no-repeat; background-color: white; top: 0.5rem; right: 0.5rem; }
         .magnifier-crosshair-h, .magnifier-crosshair-v { position: absolute; background-color: rgba(255, 0, 0, 0.7); z-index: 11; }
         .magnifier-crosshair-h { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
@@ -500,15 +500,15 @@
         }
 
         .options-wrapper {
-            margin-top: auto; /* Pousse le bouton en bas quand le conteneur est grand */
-            padding-top: 2rem; /* Ajoute de l'espace au-dessus quand le contenu est affiché */
+            margin-top: auto; /* Pushes the button to the bottom when the container is large */
+            padding-top: 2rem; /* Adds space above when content is displayed */
         }
     </style>
 </head>
 <body>
 
     <div class="main-container no-image">
-        <h1>(<span id="machineNameDisplay">nom de la machine</span>)</h1>
+        <h1>(<span id="machineNameDisplay">machine name</span>)</h1>
 
         <div class="header-controls">
             <label for="imageUpload" class="btn btn-primary">
@@ -519,7 +519,7 @@
 
         <div id="imageDisplayArea" class="hidden">
             <div id="imageContainer">
-                <img id="imagePreview" alt="Aperçu de l'image"/>
+                <img id="imagePreview" alt="Image Preview"/>
                 <div id="trashCan">🗑️</div>
                 <div id="up-arrow" class="hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" style="height: 2rem; width: 2rem; color: #374151;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -540,17 +540,17 @@
         </div>
         
         <div id="controlsContainer" class="hidden">
-             <p>Cliquez pour ajouter/verrouiller une fléxo et définir la référence.</p>
+             <p>Click to add/lock a flexo and set the reference.</p>
             <div id="marker-buttons-wrapper">
-                <!-- Les boutons de marqueurs seront générés ici par le JS -->
+                <!-- Marker buttons will be generated here by JS -->
             </div>
         </div>
         
         <div id="correctionsContainer" class="hidden">
             <div id="correctionsText">
-                <!-- Les résultats s'afficheront ici -->
+                <!-- Results will be displayed here -->
             </div>
-            <button id="sendToScreenBtn" class="btn btn-info">Envoyer à l'écran</button>
+            <button id="sendToScreenBtn" class="btn btn-info">Send to Screen</button>
         </div>
 
         <div class="options-wrapper">
@@ -558,7 +558,7 @@
         </div>
     </div>
 
-    <!-- Fenêtre Modale pour les Options -->
+    <!-- Options Modal -->
     <div id="optionsModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="optionsModal" class="modal hidden">
         <div class="modal-header">
@@ -567,133 +567,133 @@
         </div>
         <div class="modal-body">
             <div>
-                <label for="markerSizeSlider">Taille des marqueurs: <span id="sliderValueSpan">5</span></label>
+                <label for="markerSizeSlider">Marker Size: <span id="sliderValueSpan">5</span></label>
                 <input type="range" id="markerSizeSlider" min="1" max="10" value="5">
             </div>
             <div>
-                <label>Couleur des éléments</label>
+                <label>Element Color</label>
                 <div id="color-palette">
-                    <!-- Les pastilles de couleur seront injectées ici par le JS -->
+                    <!-- Color swatches will be injected here by JS -->
                 </div>
             </div>
              <div>
                 <button id="bluetoothSearchBtn" class="btn btn-primary full-width">
-                    <span id="bluetoothBtnText">Rechercher via Bluetooth</span>
+                    <span id="bluetoothBtnText">Search via Bluetooth</span>
                     <span id="bluetoothStatus" style="width: 0.75rem; height: 0.75rem; background-color: var(--color-danger); border-radius: 9999px; border: 2px solid white;"></span>
                 </button>
             </div>
             <div>
-                <button id="openSettingsBtn" class="btn btn-light full-width">Paramètres</button>
+                <button id="openSettingsBtn" class="btn btn-light full-width">Settings</button>
             </div>
         </div>
     </div>
     
-    <!-- Fenêtre Modale pour le Mot de Passe -->
+    <!-- Password Modal -->
     <div id="passwordModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="passwordModal" class="modal hidden">
-        <h2 style="margin-bottom: 1rem;">Accès aux Paramètres</h2>
-        <p style="margin-bottom: 1rem;">Appuyez sur Entrée ou Valider pour continuer.</p>
+        <h2 style="margin-bottom: 1rem;">Access Settings</h2>
+        <p style="margin-bottom: 1rem;">Press Enter or Confirm to continue.</p>
         <input type="password" id="passwordInput" style="margin-bottom: 1rem;">
         <div class="modal-actions">
-            <button id="cancelPasswordBtn" class="btn btn-light">Annuler</button>
-            <button id="submitPasswordBtn" class="btn btn-primary">Valider</button>
+            <button id="cancelPasswordBtn" class="btn btn-light">Cancel</button>
+            <button id="submitPasswordBtn" class="btn btn-primary">Confirm</button>
         </div>
     </div>
 
-    <!-- Fenêtre Modale pour les Paramètres -->
+    <!-- Settings Modal -->
     <div id="settingsModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="settingsModal" class="modal hidden">
         <div class="modal-header flex-shrink-0">
-            <h2>Paramètres</h2>
+            <h2>Settings</h2>
             <button id="closeSettingsModalBtn" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
             <div>
-                <label for="machineNameInput">Nom de la machine</label>
+                <label for="machineNameInput">Machine Name</label>
                 <input type="text" id="machineNameInput">
             </div>
              <div>
-                <label for="flexoCountSlider">Nombre de flexos (F): <span id="flexoCountValue">6</span></label>
+                <label for="flexoCountSlider">Number of flexos (F): <span id="flexoCountValue">6</span></label>
                 <input type="range" id="flexoCountSlider" min="1" max="9" value="6">
             </div>
             <div>
-                <label for="pixelToMmRatioInput">Pixels par millimètre (px/mm)</label>
+                <label for="pixelToMmRatioInput">Pixels per millimeter (px/mm)</label>
                 <input type="number" id="pixelToMmRatioInput" value="10">
             </div>
             <div>
-                <label for="bluetoothDeviceNameInput">Nom de l'appareil Bluetooth</label>
+                <label for="bluetoothDeviceNameInput">Bluetooth Device Name</label>
                 <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer">
             </div>
              <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
                 <input type="checkbox" id="saveImageCheckbox">
-                <label for="saveImageCheckbox">Sauvegarde image</label>
+                <label for="saveImageCheckbox">Save Image</label>
             </div>
              <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
                 <input type="checkbox" id="showSequenceCheckbox">
-                <label for="showSequenceCheckbox">Séquence générée</label>
+                <label for="showSequenceCheckbox">Generated Sequence</label>
             </div>
             <div>
-                <label>Gestion de la Configuration</label>
+                <label>Configuration Management</label>
                 <div class="button-group">
-                    <button id="importConfigBtn" class="btn btn-primary full-width">Importer</button>
-                    <button id="exportConfigBtn" class="btn btn-success full-width">Exporter</button>
+                    <button id="importConfigBtn" class="btn btn-primary full-width">Import</button>
+                    <button id="exportConfigBtn" class="btn btn-success full-width">Export</button>
                 </div>
                 <input type="file" id="configFileUpload" class="hidden" accept=".json, .txt">
             </div>
             <div>
-                <button id="openSequenceEditorBtn" class="btn btn-light full-width">Éditeur de Séquence</button>
+                <button id="openSequenceEditorBtn" class="btn btn-light full-width">Sequence Editor</button>
             </div>
         </div>
     </div>
     
-    <!-- Fenêtre Modale pour l'Éditeur de Séquence -->
+    <!-- Sequence Editor Modal -->
     <div id="sequenceEditorModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="sequenceEditorModal" class="modal hidden">
         <div class="modal-header">
-            <h2>Éditeur de Séquence</h2>
+            <h2>Sequence Editor</h2>
             <button id="addSequenceActionBtn" class="btn-primary" style="border-radius: 9999px; height: 2rem; width: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; padding: 0;">+</button>
         </div>
         <div id="sequence-fields-container" class="modal-body">
-             <!-- Les champs de coordonnées seront générés ici -->
+             <!-- Coordinate fields will be generated here -->
         </div>
         <div class="modal-footer">
              <button id="saveSequenceBtn" class="btn btn-success">
                  <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.25rem; width: 1.25rem; vertical-align: middle; margin-right: 0.5rem;" viewBox="0 0 20 20" fill="currentColor">
                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293zM5 4a2 2 0 012-2h6a2 2 0 012 2v2a1 1 0 102 0V4a4 4 0 00-4-4H7a4 4 0 00-4 4v12a4 4 0 004 4h6a4 4 0 004-4v-2a1 1 0 10-2 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4z" />
                  </svg>
-                 <span>Enregistrer</span>
+                 <span>Save</span>
                </button>
-             <button id="closeSequenceEditorBtn" class="btn btn-light">Fermer</button>
+             <button id="closeSequenceEditorBtn" class="btn btn-light">Close</button>
         </div>
     </div>
     
-    <!-- Fenêtre Modale pour l'affichage de la Séquence -->
+    <!-- Sequence Display Modal -->
     <div id="sequenceDisplayModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="sequenceDisplayModal" class="modal hidden" style="max-width: 32rem;">
         <div class="modal-header">
-            <h2>Séquence Générée</h2>
+            <h2>Generated Sequence</h2>
             <button id="closeSequenceDisplayBtn" class="modal-close-btn">&times;</button>
         </div>
         <pre id="sequence-output" style="background-color: #F9FAFB; padding: 1rem; border-radius: 0.25rem; text-align: left; font-size: 0.875rem; white-space: pre-wrap; height: 16rem; overflow-y: auto;"></pre>
     </div>
 
-    <!-- Fenêtre Modale de Confirmation -->
+    <!-- Confirmation Modal -->
     <div id="confirmationModalBackdrop" class="modal-backdrop hidden"></div>
     <div id="confirmationModal" class="modal hidden" style="max-width: 24rem; text-align: center;">
         <h2 style="margin-bottom: 1rem;">Confirmation</h2>
-        <p style="margin-bottom: 1.5rem;">Êtes-vous sûr de vouloir envoyer ces valeurs à l'écran ?</p>
+        <p style="margin-bottom: 1.5rem;">Are you sure you want to send these values to the screen?</p>
         <div class="confirmation-actions">
             <div class="button-group centered" style="gap: 1rem;">
-                <button id="cancelSendBtn" class="btn btn-light" style="padding-left: 1.5rem; padding-right: 1.5rem;">Non</button>
-                <button id="confirmSendBtn" class="btn btn-success" style="padding-left: 1.5rem; padding-right: 1.5rem;">Oui</button>
+                <button id="cancelSendBtn" class="btn btn-light" style="padding-left: 1.5rem; padding-right: 1.5rem;">No</button>
+                <button id="confirmSendBtn" class="btn btn-success" style="padding-left: 1.5rem; padding-right: 1.5rem;">Yes</button>
             </div>
-            <button id="stopInputBtn" class="btn btn-danger">Arrêter la saisie</button>
+            <button id="stopInputBtn" class="btn btn-danger">Stop Input</button>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Récupération des éléments du DOM (partie 1) ---
+            // --- DOM Element Retrieval (part 1) ---
             const mainContainer = document.querySelector('.main-container');
             const imageUploadInput = document.getElementById('imageUpload');
             const imagePreviewElement = document.getElementById('imagePreview');
@@ -707,7 +707,7 @@
             const trashCan = document.getElementById('trashCan');
             const upArrow = document.getElementById('up-arrow');
             
-            // --- Modale Options ---
+            // --- Options Modal ---
             const optionsBtn = document.getElementById('optionsBtn');
             const optionsModal = document.getElementById('optionsModal');
             const optionsModalBackdrop = document.getElementById('optionsModalBackdrop');
@@ -715,14 +715,14 @@
             const markerSizeSlider = document.getElementById('markerSizeSlider');
             const sliderValueSpan = document.getElementById('sliderValueSpan');
             
-            // --- Modale Confirmation ---
+            // --- Confirmation Modal ---
             const confirmationModalBackdrop = document.getElementById('confirmationModalBackdrop');
             const confirmationModal = document.getElementById('confirmationModal');
             const cancelSendBtn = document.getElementById('cancelSendBtn');
             const confirmSendBtn = document.getElementById('confirmSendBtn');
             const stopInputBtn = document.getElementById('stopInputBtn');
             
-            // --- Modale Mot de Passe ---
+            // --- Password Modal ---
             const openSettingsBtn = document.getElementById('openSettingsBtn');
             const passwordModal = document.getElementById('passwordModal');
             const passwordModalBackdrop = document.getElementById('passwordModalBackdrop');
@@ -730,7 +730,7 @@
             const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
             const submitPasswordBtn = document.getElementById('submitPasswordBtn');
 
-            // --- Modale Paramètres ---
+            // --- Settings Modal ---
             const settingsModal = document.getElementById('settingsModal');
             const settingsModalBackdrop = document.getElementById('settingsModalBackdrop');
             const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
@@ -746,7 +746,7 @@
             const exportConfigBtn = document.getElementById('exportConfigBtn');
             const configFileUpload = document.getElementById('configFileUpload');
             
-            // --- Modale Éditeur de Séquence ---
+            // --- Sequence Editor Modal ---
             const openSequenceEditorBtn = document.getElementById('openSequenceEditorBtn');
             const sequenceEditorModal = document.getElementById('sequenceEditorModal');
             const sequenceEditorModalBackdrop = document.getElementById('sequenceEditorModalBackdrop');
@@ -756,7 +756,7 @@
             const saveSequenceBtn = document.getElementById('saveSequenceBtn');
 
 
-            // --- Modale Affichage de Séquence ---
+            // --- Sequence Display Modal ---
             const sequenceDisplayModal = document.getElementById('sequenceDisplayModal');
             const sequenceDisplayModalBackdrop = document.getElementById('sequenceDisplayModalBackdrop');
             const closeSequenceDisplayBtn = document.getElementById('closeSequenceDisplayBtn');
@@ -769,7 +769,7 @@
             let connectedDevice = null;
             let btDeviceName = '';
 
-            // --- Autres éléments ---
+            // --- Other Elements ---
             const magnifierGlass = document.getElementById('magnifier-glass');
             const zoomLevel = 4;
             const dpadControls = document.getElementById('dpad-controls');
@@ -874,7 +874,7 @@
                         const config = JSON.parse(savedState);
                         applyConfig(config);
                     } catch (e) {
-                        console.error("Erreur lors du chargement de la configuration sauvegardée:", e);
+                        console.error("Error loading saved configuration:", e);
                         const initialFlexoCount = 6;
                         generateMarkerButtons(initialFlexoCount);
                         initializeDefaultSequence(initialFlexoCount);
@@ -882,6 +882,7 @@
                 } else {
                     const initialFlexoCount = 6;
                     generateMarkerButtons(initialFlexoCount);
+                    saveImageCheckbox.checked = true; // Set to true by default
                     initializeDefaultSequence(initialFlexoCount);
                 }
             }
@@ -936,14 +937,14 @@
 
                 const selectedRadio = document.querySelector('.radio-selector:checked');
                 if (!selectedRadio) {
-                    correctionsText.innerHTML = '<p>Sélectionnez une référence pour voir les corrections.</p>';
+                    correctionsText.innerHTML = '<p>Select a reference to see the corrections.</p>';
                     correctionsContainer.classList.remove('hidden');
                     return;
                 }
                 const mainMarkerId = selectedRadio.dataset.targetButton;
                 const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${mainMarkerId}"]`);
                 if (!mainMarker) {
-                    correctionsText.innerHTML = `<p>Ajoutez le marqueur de référence ${mainMarkerId} sur l'image.</p>`;
+                    correctionsText.innerHTML = `<p>Add the reference marker ${mainMarkerId} to the image.</p>`;
                     correctionsContainer.classList.remove('hidden');
                     return;
                 }
@@ -951,7 +952,7 @@
                 const mainY = parseFloat(mainMarker.style.top);
                 const otherMarkers = document.querySelectorAll('.draggable-marker:not([data-marker-id="' + mainMarkerId + '"])');
                 if (otherMarkers.length === 0) {
-                     correctionsText.innerHTML = '<p>Ajoutez d\'autres marqueurs pour calculer les corrections.</p>';
+                     correctionsText.innerHTML = '<p>Add other markers to calculate corrections.</p>';
                      correctionsContainer.classList.remove('hidden');
                      return;
                 }
@@ -973,7 +974,7 @@
                         displayName = 'Die Cutter';
                     }
 
-                    resultLine.textContent = `${displayName} : Registre (${correctionY_mm.toFixed(2)}mm) / Centrage (${correctionX_mm.toFixed(2)}mm)`;
+                    resultLine.textContent = `${displayName} : Register (${correctionY_mm.toFixed(2)}mm) / Centering (${correctionX_mm.toFixed(2)}mm)`;
                     correctionsText.appendChild(resultLine);
                 });
                 sendToScreenBtn.classList.remove('hidden');
@@ -1052,8 +1053,8 @@
                     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
                     return hashHex === storedHash;
                 } catch (e) {
-                    console.error("Crypto API non disponible:", e);
-                    alert("La vérification du mot de passe n'est pas possible dans ce contexte (non-sécurisé).");
+                    console.error("Crypto API not available:", e);
+                    alert("Password verification is not possible in this context (non-secure).");
                     return false;
                 }
             }
@@ -1063,7 +1064,7 @@
                     openSettings();
                 } else {
                     passwordInput.value = ''; // Clear incorrect password
-                    // L'alerte est déjà dans checkPassword en cas d'échec
+                    // The alert is already in checkPassword in case of failure
                 }
             }
             
@@ -1079,11 +1080,11 @@
             function initializeDefaultSequence(flexoCount) {
                 sequence = []; // Reset the global sequence
                 for (let i = 1; i <= flexoCount; i++) {
-                    sequence.push(createSequenceAction(`f${i}_reg`, 'FLEXO_REG', `F${i}`, `F${i} Registre`));
-                    sequence.push(createSequenceAction(`f${i}_cen`, 'FLEXO_CEN', `F${i}`, `F${i} Centrage`));
+                    sequence.push(createSequenceAction(`f${i}_reg`, 'FLEXO_REG', `F${i}`, `F${i} Register`));
+                    sequence.push(createSequenceAction(`f${i}_cen`, 'FLEXO_CEN', `F${i}`, `F${i} Centering`));
                 }
-                sequence.push(createSequenceAction('d_reg', 'DIECUT_REG', 'D', 'Découpe Registre'));
-                sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', 'D', 'Découpe Centrage'));
+                sequence.push(createSequenceAction('d_reg', 'DIECUT_REG', 'D', 'Die-Cut Register'));
+                sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', 'D', 'Die-Cut Centering'));
                 saveState();
             }
             
@@ -1120,7 +1121,7 @@
                         <button class="delete-btn">&times;</button>
                     `;
                 } else {
-                     content += `<span style="font-size: 0.875rem; color: var(--color-text-light); font-style: italic; margin-left: auto;">Saisie de valeur</span>`;
+                     content += `<span style="font-size: 0.875rem; color: var(--color-text-light); font-style: italic; margin-left: auto;">Value input</span>`;
                 }
                 
                 element.innerHTML = content;
@@ -1162,7 +1163,7 @@
                 const originalText = saveText.textContent;
                 saveSequenceBtn.classList.remove('btn-success');
                 saveSequenceBtn.classList.add('btn-primary');
-                saveText.textContent = "Enregistré !";
+                saveText.textContent = "Saved!";
                 setTimeout(() => {
                     saveText.textContent = originalText;
                     saveSequenceBtn.classList.remove('btn-primary');
@@ -1231,12 +1232,12 @@
                 
                 const selectedRadio = document.querySelector('.radio-selector:checked');
                 if (!selectedRadio) {
-                    alert("Veuillez sélectionner une référence (couronne).");
+                    alert("Please select a reference (crown).");
                     return;
                 }
                 const mainMarker = document.querySelector(`.draggable-marker[data-marker-id="${selectedRadio.dataset.targetButton}"]`);
                 if (!mainMarker) {
-                    alert("Marqueur de référence non trouvé sur l'image.");
+                    alert("Reference marker not found on the image.");
                     return;
                 }
 
@@ -1272,11 +1273,11 @@
             }
 
             function onDisconnected() {
-                console.log('Appareil déconnecté.');
+                console.log('Device disconnected.');
                 bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
-                bluetoothBtnText.textContent = 'Rechercher via Bluetooth';
+                bluetoothBtnText.textContent = 'Search via Bluetooth';
                 connectedDevice = null;
-                alert('Appareil déconnecté.');
+                alert('Device disconnected.');
             }
 
             function calculateScale(value) {
@@ -1608,8 +1609,8 @@
                         a.click();
                         document.body.removeChild(a);
                     } catch (e) {
-                        console.error("Erreur lors de la sauvegarde de l'image via canvas:", e);
-                        alert("Une erreur est survenue lors de la sauvegarde de l'image.");
+                        console.error("Error saving image via canvas:", e);
+                        alert("An error occurred while saving the image.");
                     }
                 }
                 
@@ -1620,7 +1621,7 @@
                 closeModal(confirmationModal, confirmationModalBackdrop);
 
                 const originalText = sendToScreenBtn.textContent;
-                sendToScreenBtn.textContent = 'Envoyé !';
+                sendToScreenBtn.textContent = 'Sent!';
                 sendToScreenBtn.classList.remove('btn-info');
                 sendToScreenBtn.classList.add('btn-success');
                 setTimeout(() => {
@@ -1633,7 +1634,16 @@
             stopInputBtn.addEventListener('click', () => {
                 if (stopInputBtn.disabled) return;
                 closeModal(confirmationModal, confirmationModalBackdrop);
-                console.log('Saisie arrêtée.');
+                console.log('Input stopped.');
+            });
+
+            optionsBtn.addEventListener('click', () => showModal(optionsModal, optionsModalBackdrop));
+            closeOptionsModalBtn.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
+
+            markerSizeSlider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                sliderValueSpan.textContent = value;
+                updateMarkerSizes(value);
             });
 
             openSettingsBtn.addEventListener('click', () => {
@@ -1650,15 +1660,19 @@
             });
 
             closeSequenceEditorBtn.addEventListener('click', () => closeModal(sequenceEditorModal, sequenceEditorModalBackdrop));
+            sequenceDisplayModalBackdrop.addEventListener('click', () => closeModal(sequenceDisplayModal, sequenceDisplayModalBackdrop));
             closeSequenceDisplayBtn.addEventListener('click', () => closeModal(sequenceDisplayModal, sequenceDisplayModalBackdrop));
 
+            passwordModalBackdrop.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
             cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
             submitPasswordBtn.addEventListener('click', handlePasswordSubmit);
             passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handlePasswordSubmit(); } });
+
+            settingsModalBackdrop.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
             closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
 
             machineNameInput.addEventListener('input', (e) => {
-                machineNameDisplay.textContent = e.target.value || 'nom de la machine';
+                machineNameDisplay.textContent = e.target.value || 'machine name';
                 saveState();
             });
             
@@ -1684,7 +1698,7 @@
             showSequenceCheckbox.addEventListener('change', saveState);
             
             addSequenceActionBtn.addEventListener('click', () => {
-                const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'Nouvelle Action');
+                const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'New Action');
                 if (!sequence) {
                     sequence = [];
                 }
@@ -1700,35 +1714,35 @@
                     return;
                 }
                 if (!btDeviceName) {
-                    alert("Veuillez d'abord renseigner le nom de l'appareil Bluetooth dans les paramètres.");
+                    alert("Please enter the Bluetooth device name in the settings first.");
                     return;
                 }
                  if (!navigator.bluetooth) {
-                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur. Elle ne fonctionne que sur un site sécurisé (https).");
+                    alert("The Web Bluetooth API is not supported on this browser. It only works on a secure (https) site.");
                     return;
                  }
 
                 try {
-                    console.log(`Recherche de l'appareil: ${btDeviceName}`);
+                    console.log(`Searching for device: ${btDeviceName}`);
                     const device = await navigator.bluetooth.requestDevice({
                         filters: [{ name: btDeviceName }],
                         optionalServices: ['battery_service', 'device_information'] 
                     });
 
-                    console.log('Appareil trouvé:', device.name);
+                    console.log('Device found:', device.name);
                     connectedDevice = device;
                     connectedDevice.addEventListener('gattserverdisconnected', onDisconnected);
                     
                     const server = await connectedDevice.gatt.connect();
-                    console.log('Connecté au serveur GATT:', server);
+                    console.log('Connected to GATT Server:', server);
 
                     bluetoothStatus.style.backgroundColor = 'var(--color-success)';
                     bluetoothBtnText.textContent = device.name;
-                    alert(`Connecté à ${device.name}`);
+                    alert(`Connected to ${device.name}`);
 
                 } catch(error) {
-                    console.error('Erreur Bluetooth:', error);
-                    alert(`Erreur Bluetooth: ${error.message}. Assurez-vous d'être sur une page sécurisée (https).`);
+                    console.error('Bluetooth Error:', error);
+                    alert(`Bluetooth Error: ${error.message}. Make sure you are on a secure (https) page.`);
                 }
             });
 
@@ -1768,14 +1782,14 @@
                         const config = JSON.parse(e.target.result);
                         applyConfig(config);
                         saveState();
-                        alert('Configuration importée avec succès !');
+                        alert('Configuration imported successfully!');
                         closeModal(settingsModal, settingsModalBackdrop);
                     } catch (error) {
-                        console.error("Erreur d'importation:", error);
-                        alert("Le fichier de configuration est invalide ou corrompu.");
+                        console.error("Import error:", error);
+                        alert("The configuration file is invalid or corrupt.");
                     }
                 };
-                reader.onerror = () => alert("Erreur lors de la lecture du fichier.");
+                reader.onerror = () => alert("Error reading the file.");
                 reader.readAsText(file);
                 event.target.value = '';
             });
@@ -1821,7 +1835,7 @@
             document.addEventListener('mousemove', drag);
             document.addEventListener('touchmove', drag, { passive: false });
 
-            // --- Initialisation ---
+            // --- Initialization ---
             loadState();
             
         });
