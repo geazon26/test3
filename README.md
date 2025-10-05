@@ -775,6 +775,7 @@
             
             let activeMarker = null;
             let lastSelectedMarker = null; 
+            let imageBlobForSaving = null;
             let magnifierHideTimer = null;
             let lastValidPosition = null;
             let sequence = [];
@@ -874,9 +875,9 @@
                 mainContainer.classList.remove('no-image');
                 imagePreviewElement.src = imageURL;
                  if (blob) {
-                    imagePreviewElement.dataset.blob = URL.createObjectURL(blob); // Keep blob for saving
+                    imageBlobForSaving = blob;
                  } else {
-                    delete imagePreviewElement.dataset.blob;
+                    imageBlobForSaving = null;
                  }
                 magnifierGlass.style.backgroundImage = `url('${imageURL}')`;
                 imagePreviewElement.onload = () => {
@@ -1068,9 +1069,10 @@
             confirmSendBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = false;
                 
-                if (saveImageCheckbox.checked && imagePreviewElement.dataset.blob) {
+                if (saveImageCheckbox.checked && imageBlobForSaving) {
+                    const blobUrl = URL.createObjectURL(imageBlobForSaving);
                     const a = document.createElement('a');
-                    a.href = imagePreviewElement.dataset.blob;
+                    a.href = blobUrl;
                     const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
                     const date = new Date();
                     const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
@@ -1078,10 +1080,13 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
                 }
                 
                 generateAndShowSequence();
                 
+                closeModal(confirmationModal, confirmationModalBackdrop);
+
                 const originalText = sendToScreenBtn.textContent;
                 sendToScreenBtn.textContent = 'Envoyé !';
                 sendToScreenBtn.classList.remove('btn-info');
@@ -1802,8 +1807,4 @@
 
 </body>
 </html>
-
-
-
-
 
