@@ -784,6 +784,7 @@
             let magnifierHideTimer = null;
             let lastValidPosition = null;
             let sequence = [];
+            let blobForDownload = null; // Variable to hold the prepared image blob
             
             const colorPaletteContainer = document.getElementById('color-palette');
             const colors = [
@@ -1580,7 +1581,23 @@
 
             sendToScreenBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = true;
-                showModal(confirmationModal, confirmationModalBackdrop);
+                blobForDownload = null; // Reset before use
+
+                if (saveImageCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
+                    // Asynchronously prepare the image blob for downloading
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = imagePreviewElement.naturalWidth;
+                    canvas.height = imagePreviewElement.naturalHeight;
+                    ctx.drawImage(imagePreviewElement, 0, 0);
+                    canvas.toBlob((blob) => {
+                        blobForDownload = blob; // Store the blob
+                        showModal(confirmationModal, confirmationModalBackdrop); // Show modal once blob is ready
+                    }, 'image/png');
+                } else {
+                    // If not saving, just show the modal immediately
+                    showModal(confirmationModal, confirmationModalBackdrop);
+                }
             });
 
             cancelSendBtn.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
@@ -1589,28 +1606,33 @@
             confirmSendBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = false;
                 
-                if (saveImageCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
+                // New logic using the pre-generated blob for robust mobile download
+                if (blobForDownload) {
                     try {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = imagePreviewElement.naturalWidth;
-                        canvas.height = imagePreviewElement.naturalHeight;
-                        ctx.drawImage(imagePreviewElement, 0, 0);
-
+                        const url = URL.createObjectURL(blobForDownload);
                         const a = document.createElement('a');
                         const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
                         const date = new Date();
                         const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                        
+                        a.style.display = 'none'; // Hide the element
+                        a.href = url;
                         a.download = `easy-register_${machineName}_${timestamp}.png`;
-
-                        a.href = canvas.toDataURL('image/png');
-
+                        
                         document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
+                        a.click(); // This is now synchronous to the user's click on "Yes"
+
+                        // Clean up after a short delay to ensure download starts
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+
                     } catch (e) {
-                        console.error("Error saving image via canvas:", e);
+                        console.error("Error saving image from blob:", e);
                         alert("An error occurred while saving the image.");
+                    } finally {
+                        blobForDownload = null; // Reset blob variable
                     }
                 }
                 
@@ -1618,7 +1640,7 @@
                     generateAndShowSequence();
                 }
                 
-                closeModal(confirmationModal, confirmationModalBackdrop);
+                // closeModal(confirmationModal, confirmationModalBackdrop);
 
                 const originalText = sendToScreenBtn.textContent;
                 sendToScreenBtn.textContent = 'Sent!';
@@ -1843,4 +1865,5 @@
 
 </body>
 </html>
+
 
