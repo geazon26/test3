@@ -508,11 +508,11 @@
 <body>
 
     <div class="main-container no-image">
-        <h1>Easy Register (<span id="machineNameDisplay">nom de la machine</span>)</h1>
+        <h1>(<span id="machineNameDisplay">nom de la machine</span>)</h1>
 
         <div class="header-controls">
             <label for="imageUpload" class="btn btn-primary">
-                Sélectionner une image
+                Capture
             </label>
             <input type="file" id="imageUpload" class="hidden" accept="image/*">
         </div>
@@ -624,27 +624,9 @@
                 <label for="bluetoothDeviceNameInput">Nom de l'appareil Bluetooth</label>
                 <input type="text" id="bluetoothDeviceNameInput" placeholder="Ex: ESP32_Printer">
             </div>
-            <div>
-                <label>Sauvegarde Automatique</label>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="autoSaveCheckbox">
-                    <label for="autoSaveCheckbox">Sauvegarder l'image après envoi</label>
-                </div>
-                <div style="margin-top: 0.5rem;">
-                     <button id="selectFolderBtn" class="btn btn-light full-width">Sélectionner un dossier</button>
-                     <p id="folderNameDisplay" style="font-size: 0.75rem; margin-top: 0.25rem;"></p>
-                </div>
-            </div>
-            <div>
-                <label>Sauvegarde automatique avec croix</label>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="autoSaveWithMarkersCheckbox">
-                    <label for="autoSaveWithMarkersCheckbox">Sauvegarder l'image avec les croix et le rapport</label>
-                </div>
-                <div style="margin-top: 0.5rem;">
-                     <button id="selectFolderWithMarkersBtn" class="btn btn-light full-width">Sélectionner un dossier</button>
-                     <p id="folderNameWithMarkersDisplay" style="font-size: 0.75rem; margin-top: 0.25rem;"></p>
-                </div>
+             <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
+                <input type="checkbox" id="saveImageCheckbox">
+                <label for="saveImageCheckbox">Sauvegarde image</label>
             </div>
             <div>
                 <label>Gestion de la Configuration</label>
@@ -753,16 +735,11 @@
             const flexoCountSlider = document.getElementById('flexoCountSlider');
             const flexoCountValue = document.getElementById('flexoCountValue');
             const bluetoothDeviceNameInput = document.getElementById('bluetoothDeviceNameInput');
+            const saveImageCheckbox = document.getElementById('saveImageCheckbox');
             const pixelToMmRatioInput = document.getElementById('pixelToMmRatioInput');
             const importConfigBtn = document.getElementById('importConfigBtn');
             const exportConfigBtn = document.getElementById('exportConfigBtn');
             const configFileUpload = document.getElementById('configFileUpload');
-            const autoSaveCheckbox = document.getElementById('autoSaveCheckbox');
-            const selectFolderBtn = document.getElementById('selectFolderBtn');
-            const folderNameDisplay = document.getElementById('folderNameDisplay');
-            const autoSaveWithMarkersCheckbox = document.getElementById('autoSaveWithMarkersCheckbox');
-            const selectFolderWithMarkersBtn = document.getElementById('selectFolderWithMarkersBtn');
-            const folderNameWithMarkersDisplay = document.getElementById('folderNameWithMarkersDisplay');
             
             // --- Modale Éditeur de Séquence ---
             const openSequenceEditorBtn = document.getElementById('openSequenceEditorBtn');
@@ -801,12 +778,6 @@
             let magnifierHideTimer = null;
             let lastValidPosition = null;
             let sequence = [];
-            let autoSaveEnabled = false;
-            let directoryHandle = null;
-            let savedDirectoryName = '';
-            let autoSaveWithMarkersEnabled = false;
-            let directoryHandleWithMarkers = null;
-            let savedDirectoryNameWithMarkers = '';
             
             const colorPaletteContainer = document.getElementById('color-palette');
             const colors = [
@@ -837,11 +808,8 @@
                     flexoCount: parseInt(flexoCountSlider.value, 10),
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
+                    saveImage: saveImageCheckbox.checked,
                     sequence: sequence,
-                    autoSaveEnabled: autoSaveCheckbox.checked,
-                    savedDirectoryName: savedDirectoryName,
-                    autoSaveWithMarkersEnabled: autoSaveWithMarkersCheckbox.checked,
-                    savedDirectoryNameWithMarkers: savedDirectoryNameWithMarkers
                 };
                 localStorage.setItem('easyRegisterState', JSON.stringify(config));
             }
@@ -864,24 +832,11 @@
                     bluetoothDeviceNameInput.value = config.bluetoothDeviceName;
                     btDeviceName = config.bluetoothDeviceName;
                 }
+                if (typeof config.saveImage === 'boolean') {
+                    saveImageCheckbox.checked = config.saveImage;
+                }
                 if (config.sequence) {
                     sequence = config.sequence;
-                }
-                if (config.autoSaveEnabled) {
-                    autoSaveCheckbox.checked = !!config.autoSaveEnabled;
-                    autoSaveEnabled = !!config.autoSaveEnabled;
-                }
-                if (config.savedDirectoryName) {
-                    savedDirectoryName = config.savedDirectoryName;
-                    folderNameDisplay.textContent = `Dossier : ${savedDirectoryName}`;
-                }
-                if (config.autoSaveWithMarkersEnabled) {
-                    autoSaveWithMarkersCheckbox.checked = !!config.autoSaveWithMarkersEnabled;
-                    autoSaveWithMarkersEnabled = !!config.autoSaveWithMarkersEnabled;
-                }
-                if (config.savedDirectoryNameWithMarkers) {
-                    savedDirectoryNameWithMarkers = config.savedDirectoryNameWithMarkers;
-                    folderNameWithMarkersDisplay.textContent = `Dossier : ${savedDirectoryNameWithMarkers}`;
                 }
 
                 updateCorrections();
@@ -1113,9 +1068,19 @@
             confirmSendBtn.addEventListener('click', () => {
                 stopInputBtn.disabled = false;
                 
+                if (saveImageCheckbox.checked && imagePreviewElement.dataset.blob) {
+                    const a = document.createElement('a');
+                    a.href = imagePreviewElement.dataset.blob;
+                    const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
+                    const date = new Date();
+                    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                    a.download = `easy-register_${machineName}_${timestamp}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+                
                 generateAndShowSequence();
-                handleAutoSave();
-                handleAutoSaveWithMarkers();
                 
                 const originalText = sendToScreenBtn.textContent;
                 sendToScreenBtn.textContent = 'Envoyé !';
@@ -1208,6 +1173,8 @@
                 btDeviceName = e.target.value;
                 saveState();
             });
+            
+            saveImageCheckbox.addEventListener('change', saveState);
             
              function createSequenceAction(id, type, flexoId, name, x = '', y = '') {
                  return { id, type, flexoId, name, x, y };
@@ -1744,11 +1711,8 @@
                     flexoCount: parseInt(flexoCountSlider.value, 10),
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
-                    sequence: sequence,
-                    autoSaveEnabled: autoSaveCheckbox.checked,
-                    savedDirectoryName: savedDirectoryName,
-                    autoSaveWithMarkersEnabled: autoSaveWithMarkersCheckbox.checked,
-                    savedDirectoryNameWithMarkers: savedDirectoryNameWithMarkers
+                    saveImage: saveImageCheckbox.checked,
+                    sequence: sequence
                 };
                 const configJson = JSON.stringify(config, null, 2);
                 const blob = new Blob([configJson], { type: 'application/json' });
@@ -1826,183 +1790,6 @@
                 }
             });
 
-            // --- Logique de sauvegarde automatique ---
-            autoSaveCheckbox.addEventListener('change', (e) => {
-                autoSaveEnabled = e.target.checked;
-                saveState();
-            });
-
-            selectFolderBtn.addEventListener('click', async () => {
-                try {
-                    if (!window.showDirectoryPicker) {
-                        alert("Votre navigateur ne supporte pas la sélection de dossier. Cette fonctionnalité n'est disponible que sur un site sécurisé (https).");
-                        return;
-                    }
-                    directoryHandle = await window.showDirectoryPicker();
-                    savedDirectoryName = directoryHandle.name;
-                    folderNameDisplay.textContent = `Dossier : ${directoryHandle.name}`;
-                    saveState();
-                } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.warn("Sélection de dossier échouée:", err.name, err.message);
-                    }
-                }
-            });
-            
-            autoSaveWithMarkersCheckbox.addEventListener('change', (e) => {
-                autoSaveWithMarkersEnabled = e.target.checked;
-                saveState();
-            });
-
-            selectFolderWithMarkersBtn.addEventListener('click', async () => {
-                try {
-                    if (!window.showDirectoryPicker) {
-                        alert("Votre navigateur ne supporte pas la sélection de dossier.");
-                        return;
-                    }
-                    directoryHandleWithMarkers = await window.showDirectoryPicker();
-                    savedDirectoryNameWithMarkers = directoryHandleWithMarkers.name;
-                    folderNameWithMarkersDisplay.textContent = `Dossier : ${directoryHandleWithMarkers.name}`;
-                    saveState();
-                } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.warn("Sélection de dossier (avec croix) échouée:", err.name, err.message);
-                    }
-                }
-            });
-
-            function getFormattedDateTime() {
-                const now = new Date();
-                const day = String(now.getDate()).padStart(2, '0');
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const year = now.getFullYear();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-                return `${day}-${month}-${year}_${hours}-${minutes}-${seconds}`;
-            }
-
-            async function handleAutoSave() {
-                if (!autoSaveEnabled || !directoryHandle || !imagePreviewElement.dataset.blob) {
-                    return;
-                }
-
-                try {
-                    if (await directoryHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') {
-                        if (await directoryHandle.requestPermission({ mode: 'readwrite' }) !== 'granted') {
-                            alert("La permission d'écrire dans le dossier a été refusée.");
-                            directoryHandle = null;
-                            savedDirectoryName = '';
-                            folderNameDisplay.textContent = '';
-                            saveState();
-                            return;
-                        }
-                    }
-
-                    const blobUrl = imagePreviewElement.dataset.blob;
-                    const response = await fetch(blobUrl);
-                    const imageBlob = await response.blob();
-                    
-                    const fileName = `${getFormattedDateTime()}.png`;
-                    const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(imageBlob);
-                    await writable.close();
-                    console.log(`Image sauvegardée avec succès : ${fileName}`);
-
-                } catch(error) {
-                    console.error("Erreur lors de la sauvegarde automatique de l'image:", error);
-                    alert("Une erreur est survenue lors de la sauvegarde de l'image.");
-                }
-            }
-            
-            async function handleAutoSaveWithMarkers() {
-                if (!autoSaveWithMarkersEnabled || !directoryHandleWithMarkers || !imagePreviewElement.src || imagePreviewElement.src.endsWith('#')) {
-                    return;
-                }
-
-                try {
-                    if (await directoryHandleWithMarkers.queryPermission({ mode: 'readwrite' }) !== 'granted') {
-                        if (await directoryHandleWithMarkers.requestPermission({ mode: 'readwrite' }) !== 'granted') {
-                            alert("La permission d'écrire dans le dossier a été refusée pour la sauvegarde avec croix.");
-                            directoryHandleWithMarkers = null;
-                            savedDirectoryNameWithMarkers = '';
-                            folderNameWithMarkersDisplay.textContent = '';
-                            saveState();
-                            return;
-                        }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = imagePreviewElement.naturalWidth;
-                    canvas.height = imagePreviewElement.naturalHeight;
-                    ctx.drawImage(imagePreviewElement, 0, 0, canvas.width, canvas.height);
-
-                    const markers = document.querySelectorAll('.draggable-marker');
-                    const displayedImgRect = imagePreviewElement.getBoundingClientRect();
-                    const scaleX = canvas.width / displayedImgRect.width;
-                    const scaleY = canvas.height / displayedImgRect.height;
-                    const mainColor = getComputedStyle(document.documentElement).getPropertyValue('--main-marker-color').trim();
-
-                    markers.forEach(marker => {
-                        const markerRect = marker.getBoundingClientRect();
-                        const markerCenterXInDisplayedImg = (markerRect.left + markerRect.width / 2) - displayedImgRect.left;
-                        const markerCenterYInDisplayedImg = (markerRect.top + markerRect.height / 2) - displayedImgRect.top;
-                        const canvasX = markerCenterXInDisplayedImg * scaleX;
-                        const canvasY = markerCenterYInDisplayedImg * scaleY;
-                        const id = marker.dataset.markerId;
-                        const labelEl = marker.querySelector('.marker-label');
-                        const labelStyle = window.getComputedStyle(labelEl);
-                        const currentMarkerScale = parseFloat(marker.style.transform.split('scale(')[1]) || 1;
-                        const baseMarkerWidth = 24;
-                        const scaledMarkerWidth = baseMarkerWidth * currentMarkerScale;
-                        const markerWidthOnCanvas = scaledMarkerWidth * scaleX;
-                        const markerHeightOnCanvas = scaledMarkerWidth * scaleY;
-                        const crosshairThicknessOnCanvas = 2 * Math.min(scaleX, scaleY);
-                        
-                        ctx.fillStyle = mainColor;
-                        ctx.fillRect(canvasX - markerWidthOnCanvas / 2, canvasY - crosshairThicknessOnCanvas / 2, markerWidthOnCanvas, crosshairThicknessOnCanvas);
-                        ctx.fillRect(canvasX - crosshairThicknessOnCanvas / 2, canvasY - markerHeightOnCanvas / 2, crosshairThicknessOnCanvas, markerHeightOnCanvas);
-                        
-                        ctx.font = `${labelStyle.fontWeight} ${parseInt(labelStyle.fontSize) * scaleY}px sans-serif`;
-                        ctx.fillStyle = mainColor;
-                        ctx.textAlign = 'left';
-                        ctx.textBaseline = 'middle';
-                        ctx.strokeStyle = 'white';
-                        ctx.lineWidth = 2 * Math.min(scaleX, scaleY);
-                        ctx.strokeText(id, canvasX + markerWidthOnCanvas / 2 + (5 * scaleX), canvasY);
-                        ctx.fillText(id, canvasX + markerWidthOnCanvas / 2 + (5 * scaleX), canvasY);
-                    });
-                    
-                    const baseFileName = `${getFormattedDateTime()}_X`;
-                    const imageFileName = `${baseFileName}.png`;
-                    const textFileName = `${baseFileName}.txt`;
-
-                    canvas.toBlob(async (blob) => {
-                        if (blob) {
-                            const imageFileHandle = await directoryHandleWithMarkers.getFileHandle(imageFileName, { create: true });
-                            const writableImage = await imageFileHandle.createWritable();
-                            await writableImage.write(blob);
-                            await writableImage.close();
-                            console.log(`Image avec croix sauvegardée : ${imageFileName}`);
-                            
-                            const reportText = correctionsText.innerText;
-                            const textFileHandle = await directoryHandleWithMarkers.getFileHandle(textFileName, { create: true });
-                            const writableText = await textFileHandle.createWritable();
-                            await writableText.write(reportText);
-                            await writableText.close();
-                            console.log(`Rapport sauvegardé : ${textFileName}`);
-                        }
-                    }, 'image/png');
-
-                } catch (error) {
-                    console.error("Erreur lors de la sauvegarde avec croix:", error);
-                    alert("Une erreur est survenue lors de la sauvegarde de l'image et du rapport.");
-                }
-            }
-
-
             // --- Initialisation ---
             loadState();
             
@@ -2015,5 +1802,8 @@
 
 </body>
 </html>
+
+
+
 
 
