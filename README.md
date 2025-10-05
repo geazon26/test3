@@ -628,6 +628,10 @@
                 <input type="checkbox" id="saveImageCheckbox">
                 <label for="saveImageCheckbox">Sauvegarde image</label>
             </div>
+             <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
+                <input type="checkbox" id="showSequenceCheckbox">
+                <label for="showSequenceCheckbox">Séquence générée</label>
+            </div>
             <div>
                 <label>Gestion de la Configuration</label>
                 <div class="button-group">
@@ -736,6 +740,7 @@
             const flexoCountValue = document.getElementById('flexoCountValue');
             const bluetoothDeviceNameInput = document.getElementById('bluetoothDeviceNameInput');
             const saveImageCheckbox = document.getElementById('saveImageCheckbox');
+            const showSequenceCheckbox = document.getElementById('showSequenceCheckbox');
             const pixelToMmRatioInput = document.getElementById('pixelToMmRatioInput');
             const importConfigBtn = document.getElementById('importConfigBtn');
             const exportConfigBtn = document.getElementById('exportConfigBtn');
@@ -785,24 +790,21 @@
                 '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF',
                 '#00FFFF', '#FF4500', '#7FFF00', '#9400D3', '#00FA9A'
             ];
-
-            colors.forEach((color, index) => {
-                const swatch = document.createElement('div');
-                swatch.className = 'color-swatch';
-                swatch.style.backgroundColor = color;
-                swatch.dataset.color = color;
-                if (index === 0) {
-                    swatch.classList.add('selected');
-                    document.documentElement.style.setProperty('--main-marker-color', color);
-                }
-                swatch.addEventListener('click', () => {
-                    document.documentElement.style.setProperty('--main-marker-color', color);
-                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-                    swatch.classList.add('selected');
-                });
-                colorPaletteContainer.appendChild(swatch);
-            });
             
+            // ===============================================
+            // SECTION 1: ALL FUNCTION DEFINITIONS
+            // ===============================================
+
+            function showModal(modal, backdrop) {
+                modal.classList.remove('hidden');
+                backdrop.classList.remove('hidden');
+            }
+
+            function closeModal(modal, backdrop) {
+                modal.classList.add('hidden');
+                backdrop.classList.add('hidden');
+            }
+
             function saveState() {
                 const config = {
                     machineName: machineNameInput.value,
@@ -810,6 +812,7 @@
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
                     saveImage: saveImageCheckbox.checked,
+                    showSequence: showSequenceCheckbox.checked,
                     sequence: sequence,
                 };
                 localStorage.setItem('easyRegisterState', JSON.stringify(config));
@@ -836,11 +839,32 @@
                 if (typeof config.saveImage === 'boolean') {
                     saveImageCheckbox.checked = config.saveImage;
                 }
+                if (typeof config.showSequence === 'boolean') {
+                    showSequenceCheckbox.checked = config.showSequence;
+                }
                 if (config.sequence) {
                     sequence = config.sequence;
                 }
-
                 updateCorrections();
+            }
+
+            function generateMarkerButtons(count) {
+                markerButtonsWrapper.innerHTML = '';
+                let htmlContent = '';
+                for(let i = 1; i <= count; i++) {
+                    htmlContent += `
+                        <div class="marker-btn-container">
+                            <button data-marker-id="F${i}" class="marker-btn">F${i}</button>
+                            <div><input type="radio" name="marker-select" id="radio-F${i}" data-target-button="F${i}" class="radio-selector"><label for="radio-F${i}" class="radio-label"></label></div>
+                        </div>`;
+                }
+                htmlContent += `
+                    <div class="marker-btn-container">
+                        <button data-marker-id="D" class="marker-btn">D</button>
+                        <div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div>
+                    </div>`;
+                markerButtonsWrapper.innerHTML = htmlContent;
+                addMarkerButtonListeners();
             }
 
             function loadState() {
@@ -862,16 +886,33 @@
                 }
             }
             
-            imageUploadInput.addEventListener('change', function(event) {
-                if (event.target.files && event.target.files[0]) {
-                    const file = event.target.files[0];
-                    const imageURL = URL.createObjectURL(file);
-                    setImageAsPreview(imageURL, file);
+            function clearMarkersAndCorrections() {
+                document.querySelectorAll('.draggable-marker').forEach(marker => marker.remove());
+                document.querySelectorAll('.marker-btn').forEach(btn => {
+                    btn.classList.remove('active-marker-highlight', 'reference');
+                });
+                document.querySelectorAll('.radio-selector').forEach(radio => radio.checked = false);
+                lastSelectedMarker = null;
+                correctionsText.innerHTML = '';
+                correctionsContainer.classList.add('hidden');
+            }
+            
+            function resetSession() {
+                clearMarkersAndCorrections();
+                mainContainer.classList.add('no-image');
+                imageDisplayArea.classList.add('hidden');
+                controlsContainer.classList.add('hidden');
+                correctionsContainer.classList.add('hidden');
+                upArrow.classList.add('hidden');
+                if (imagePreviewElement.src) {
+                    URL.revokeObjectURL(imagePreviewElement.src);
                 }
-            });
+                imagePreviewElement.src = "";
+                imageBlobForSaving = null;
+            }
 
             function setImageAsPreview(imageURL, blob) {
-                resetSession(true); // Passer true pour ne pas réinitialiser la mise en page
+                clearMarkersAndCorrections(); 
                 mainContainer.classList.remove('no-image');
                 imagePreviewElement.src = imageURL;
                  if (blob) {
@@ -886,88 +927,7 @@
                     upArrow.classList.remove('hidden');
                 };
             }
-            
-            function addMarkerButtonListeners() {
-                document.querySelectorAll('.marker-btn').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const markerId = button.dataset.markerId;
-                        const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
-                        if (existingMarker) {
-                            existingMarker.classList.toggle('locked');
-                        } else {
-                            createMarker(markerId);
-                        }
-                    });
-                });
 
-                document.querySelectorAll('.radio-selector').forEach(radio => {
-                    radio.addEventListener('change', (event) => {
-                        document.querySelectorAll('.marker-btn').forEach(btn => {
-                            btn.classList.remove('reference');
-                        });
-                        if (event.target.checked) {
-                            const targetButtonId = event.target.dataset.targetButton;
-                            const targetButton = document.querySelector(`.marker-btn[data-marker-id="${targetButtonId}"]`);
-                            if (targetButton) {
-                                targetButton.classList.add('reference');
-                            }
-                            
-                            const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${targetButtonId}"]`);
-                            if (!existingMarker) {
-                                createMarker(targetButtonId);
-                            }
-                        }
-                        updateCorrections();
-                    });
-                });
-            }
-            
-            function generateMarkerButtons(count) {
-                markerButtonsWrapper.innerHTML = '';
-                let htmlContent = '';
-                for(let i = 1; i <= count; i++) {
-                    htmlContent += `
-                        <div class="marker-btn-container">
-                            <button data-marker-id="F${i}" class="marker-btn">F${i}</button>
-                            <div><input type="radio" name="marker-select" id="radio-F${i}" data-target-button="F${i}" class="radio-selector"><label for="radio-F${i}" class="radio-label"></label></div>
-                        </div>`;
-                }
-                htmlContent += `
-                    <div class="marker-btn-container">
-                        <button data-marker-id="D" class="marker-btn">D</button>
-                        <div><input type="radio" name="marker-select" id="radio-D" data-target-button="D" class="radio-selector"><label for="radio-D" class="radio-label"></label></div>
-                    </div>`;
-                markerButtonsWrapper.innerHTML = htmlContent;
-                addMarkerButtonListeners();
-            }
-            
-            function createMarker(id) {
-                const marker = document.createElement('div');
-                marker.className = 'draggable-marker';
-                marker.dataset.markerId = id;
-                marker.innerHTML = `<div class="marker-cross-h"></div><div class="marker-cross-v"></div><span class="marker-label">${id}</span>`;
-                
-                const imageRect = imagePreviewElement.getBoundingClientRect();
-                const containerRect = imageContainer.getBoundingClientRect();
-                const imageOffsetX = imageRect.left - containerRect.left;
-                const imageOffsetY = imageRect.top - containerRect.top;
-                marker.style.left = `${imageOffsetX + (imageRect.width * 0.05)}px`; 
-                marker.style.top = `${imageOffsetY + (imageRect.height * 0.95)}px`;
-
-                const currentSliderValue = markerSizeSlider.value;
-                const scale = calculateScale(currentSliderValue);
-                marker.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                imageContainer.appendChild(marker);
-                marker.addEventListener('mousedown', dragStart);
-                marker.addEventListener('touchstart', dragStart, { passive: false });
-                
-                const correspondingButton = document.querySelector(`.marker-btn[data-marker-id="${id}"]`);
-                if (correspondingButton) {
-                   correspondingButton.classList.add('active-marker-highlight');
-                }
-                updateCorrections();
-            }
-            
             function updateCorrections() {
                 correctionsText.innerHTML = '';
                 sendToScreenBtn.classList.add('hidden');
@@ -1020,106 +980,67 @@
                 correctionsContainer.classList.remove('hidden');
             }
 
-            function showModal(modal, backdrop) {
-                modal.classList.remove('hidden');
-                backdrop.classList.remove('hidden');
-            }
-            function closeModal(modal, backdrop) {
-                modal.classList.add('hidden');
-                backdrop.classList.add('hidden');
-            }
-            
-            optionsBtn.addEventListener('click', () => showModal(optionsModal, optionsModalBackdrop));
-            closeOptionsModalBtn.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
-            optionsModalBackdrop.addEventListener('click', () => closeModal(optionsModal, optionsModalBackdrop));
+            function createMarker(id) {
+                const marker = document.createElement('div');
+                marker.className = 'draggable-marker';
+                marker.dataset.markerId = id;
+                marker.innerHTML = `<div class="marker-cross-h"></div><div class="marker-cross-v"></div><span class="marker-label">${id}</span>`;
+                
+                const imageRect = imagePreviewElement.getBoundingClientRect();
+                const containerRect = imageContainer.getBoundingClientRect();
+                const imageOffsetX = imageRect.left - containerRect.left;
+                const imageOffsetY = imageRect.top - containerRect.top;
+                marker.style.left = `${imageOffsetX + (imageRect.width * 0.05)}px`; 
+                marker.style.top = `${imageOffsetY + (imageRect.height * 0.95)}px`;
 
-            markerSizeSlider.addEventListener('input', (event) => {
-                const value = event.target.value;
-                sliderValueSpan.textContent = value;
-                updateMarkerSizes(value);
-            });
-            
-            function resetSession(keepLayout = false) {
-                document.querySelectorAll('.draggable-marker').forEach(marker => marker.remove());
-                document.querySelectorAll('.marker-btn').forEach(btn => {
-                    btn.classList.remove('active-marker-highlight', 'reference');
-                });
-                document.querySelectorAll('.radio-selector').forEach(radio => radio.checked = false);
-                lastSelectedMarker = null;
+                const currentSliderValue = markerSizeSlider.value;
+                const scale = calculateScale(currentSliderValue);
+                marker.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                imageContainer.appendChild(marker);
+                marker.addEventListener('mousedown', dragStart);
+                marker.addEventListener('touchstart', dragStart, { passive: false });
+                
+                const correspondingButton = document.querySelector(`.marker-btn[data-marker-id="${id}"]`);
+                if (correspondingButton) {
+                   correspondingButton.classList.add('active-marker-highlight');
+                }
                 updateCorrections();
-                
-                if (!keepLayout) {
-                    mainContainer.classList.add('no-image');
-                    imageDisplayArea.classList.add('hidden');
-                    controlsContainer.classList.add('hidden');
-                    correctionsContainer.classList.add('hidden');
-                    upArrow.classList.add('hidden');
-                }
             }
-            trashCan.addEventListener('click', () => resetSession(false));
-
-            sendToScreenBtn.addEventListener('click', () => {
-                stopInputBtn.disabled = true;
-                showModal(confirmationModal, confirmationModalBackdrop);
-            });
-
-            cancelSendBtn.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
-            confirmationModalBackdrop.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
-
-            confirmSendBtn.addEventListener('click', () => {
-                stopInputBtn.disabled = false;
-                
-                if (saveImageCheckbox.checked && imageBlobForSaving) {
-                    const blobUrl = URL.createObjectURL(imageBlobForSaving);
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
-                    const date = new Date();
-                    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
-                    a.download = `easy-register_${machineName}_${timestamp}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(blobUrl);
-                }
-                
-                generateAndShowSequence();
-                
-                closeModal(confirmationModal, confirmationModalBackdrop);
-
-                const originalText = sendToScreenBtn.textContent;
-                sendToScreenBtn.textContent = 'Envoyé !';
-                sendToScreenBtn.classList.remove('btn-info');
-                sendToScreenBtn.classList.add('btn-success');
-                setTimeout(() => {
-                    sendToScreenBtn.textContent = originalText;
-                    sendToScreenBtn.classList.remove('btn-success');
-                    sendToScreenBtn.classList.add('btn-info');
-                }, 2000);
-            });
             
-            stopInputBtn.addEventListener('click', () => {
-                if (stopInputBtn.disabled) return;
-                closeModal(confirmationModal, confirmationModalBackdrop);
-                console.log('Saisie arrêtée.');
-            });
+            function addMarkerButtonListeners() {
+                document.querySelectorAll('.marker-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const markerId = button.dataset.markerId;
+                        const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${markerId}"]`);
+                        if (existingMarker) {
+                            existingMarker.classList.toggle('locked');
+                        } else {
+                            createMarker(markerId);
+                        }
+                    });
+                });
 
-            // --- Logique Paramètres & Mot de Passe & Séquence ---
-            openSettingsBtn.addEventListener('click', () => {
-                closeModal(optionsModal, optionsModalBackdrop);
-                passwordInput.value = '';
-                showModal(passwordModal, passwordModalBackdrop);
-                passwordInput.focus();
-            });
-            
-            openSequenceEditorBtn.addEventListener('click', () => {
-                populateSequenceEditor();
-                closeModal(settingsModal, settingsModalBackdrop);
-                showModal(sequenceEditorModal, sequenceEditorModalBackdrop);
-            });
-
-            closeSequenceEditorBtn.addEventListener('click', () => closeModal(sequenceEditorModal, sequenceEditorModalBackdrop));
-            closeSequenceDisplayBtn.addEventListener('click', () => closeModal(sequenceDisplayModal, sequenceDisplayModalBackdrop));
+                document.querySelectorAll('.radio-selector').forEach(radio => {
+                    radio.addEventListener('change', (event) => {
+                        document.querySelectorAll('.marker-btn').forEach(btn => {
+                            btn.classList.remove('reference');
+                        });
+                        if (event.target.checked) {
+                            const targetButtonId = event.target.dataset.targetButton;
+                            const targetButton = document.querySelector(`.marker-btn[data-marker-id="${targetButtonId}"]`);
+                            if (targetButton) {
+                                targetButton.classList.add('reference');
+                            }
+                            
+                            const existingMarker = document.querySelector(`.draggable-marker[data-marker-id="${targetButtonId}"]`);
+                            if (!existingMarker) {
+                                createMarker(targetButtonId);
+                            }
+                        }
+                        updateCorrections();
+                    });
+                });
+            }
 
             async function checkPassword(inputPassword) {
                 const storedHash = '36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068'; // SHA-256 hash for " " (a single space)
@@ -1150,36 +1071,6 @@
                 closeModal(passwordModal, passwordModalBackdrop);
                 showModal(settingsModal, settingsModalBackdrop);
             }
-
-            cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
-            submitPasswordBtn.addEventListener('click', handlePasswordSubmit);
-            passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handlePasswordSubmit(); } });
-            closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
-
-            machineNameInput.addEventListener('input', (e) => {
-                machineNameDisplay.textContent = e.target.value || 'nom de la machine';
-                saveState();
-            });
-            
-            flexoCountSlider.addEventListener('input', (e) => {
-                const count = parseInt(e.target.value, 10);
-                flexoCountValue.textContent = count;
-                resetSession();
-                generateMarkerButtons(count);
-                initializeDefaultSequence(count);
-            });
-            
-            pixelToMmRatioInput.addEventListener('input', () => {
-                updateCorrections();
-                saveState();
-            });
-            
-            bluetoothDeviceNameInput.addEventListener('input', (e) => {
-                btDeviceName = e.target.value;
-                saveState();
-            });
-            
-            saveImageCheckbox.addEventListener('change', saveState);
             
              function createSequenceAction(id, type, flexoId, name, x = '', y = '') {
                  return { id, type, flexoId, name, x, y };
@@ -1195,7 +1086,6 @@
                 sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', 'D', 'Découpe Centrage'));
                 saveState();
             }
-
             
             function populateSequenceEditor() {
                 sequenceFieldsContainer.innerHTML = ''; // Clear previous fields
@@ -1280,17 +1170,6 @@
                 }, 1500);
             }
             
-            addSequenceActionBtn.addEventListener('click', () => {
-                const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'Nouvelle Action');
-                if (!sequence) {
-                    sequence = [];
-                }
-                sequence.push(newAction);
-                populateSequenceEditor();
-            });
-
-            saveSequenceBtn.addEventListener('click', saveSequenceFromEditor);
-
             function addDragAndDropListeners() {
                 let draggingElement = null;
                 sequenceFieldsContainer.querySelectorAll('[draggable="true"]').forEach(item => {
@@ -1392,46 +1271,6 @@
                 showModal(sequenceDisplayModal, sequenceDisplayModalBackdrop);
             }
 
-
-            // --- Logique Bluetooth ---
-            bluetoothSearchBtn.addEventListener('click', async () => {
-                if (connectedDevice) {
-                    connectedDevice.gatt.disconnect();
-                    return;
-                }
-                if (!btDeviceName) {
-                    alert("Veuillez d'abord renseigner le nom de l'appareil Bluetooth dans les paramètres.");
-                    return;
-                }
-                 if (!navigator.bluetooth) {
-                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur. Elle ne fonctionne que sur un site sécurisé (https).");
-                    return;
-                 }
-
-                try {
-                    console.log(`Recherche de l'appareil: ${btDeviceName}`);
-                    const device = await navigator.bluetooth.requestDevice({
-                        filters: [{ name: btDeviceName }],
-                        optionalServices: ['battery_service', 'device_information'] 
-                    });
-
-                    console.log('Appareil trouvé:', device.name);
-                    connectedDevice = device;
-                    connectedDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                    
-                    const server = await connectedDevice.gatt.connect();
-                    console.log('Connecté au serveur GATT:', server);
-
-                    bluetoothStatus.style.backgroundColor = 'var(--color-success)';
-                    bluetoothBtnText.textContent = device.name;
-                    alert(`Connecté à ${device.name}`);
-
-                } catch(error) {
-                    console.error('Erreur Bluetooth:', error);
-                    alert(`Erreur Bluetooth: ${error.message}. Assurez-vous d'être sur une page sécurisée (https).`);
-                }
-            });
-
             function onDisconnected() {
                 console.log('Appareil déconnecté.');
                 bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
@@ -1439,7 +1278,6 @@
                 connectedDevice = null;
                 alert('Appareil déconnecté.');
             }
-
 
             function calculateScale(value) {
                 value = parseInt(value);
@@ -1556,7 +1394,6 @@
                 }, 3000);
                 updateCorrections();
             }
-
 
             function dragStart(e) {
                 if (magnifierHideTimer) clearTimeout(magnifierHideTimer);
@@ -1709,7 +1546,192 @@
                 return corners[0];
             }
             
-            // --- Logique pour l'import/export de configuration ---
+            // ===============================================
+            // SECTION 2: INITIAL SETUP & EVENT LISTENERS
+            // ===============================================
+
+            colors.forEach((color, index) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.dataset.color = color;
+                if (index === 0) {
+                    swatch.classList.add('selected');
+                    document.documentElement.style.setProperty('--main-marker-color', color);
+                }
+                swatch.addEventListener('click', () => {
+                    document.documentElement.style.setProperty('--main-marker-color', color);
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    swatch.classList.add('selected');
+                });
+                colorPaletteContainer.appendChild(swatch);
+            });
+            
+            imageUploadInput.addEventListener('change', function(event) {
+                if (event.target.files && event.target.files[0]) {
+                    const file = event.target.files[0];
+                    const imageURL = URL.createObjectURL(file);
+                    setImageAsPreview(imageURL, file);
+                }
+            });
+
+            trashCan.addEventListener('click', clearMarkersAndCorrections);
+
+            sendToScreenBtn.addEventListener('click', () => {
+                stopInputBtn.disabled = true;
+                showModal(confirmationModal, confirmationModalBackdrop);
+            });
+
+            cancelSendBtn.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
+            confirmationModalBackdrop.addEventListener('click', () => closeModal(confirmationModal, confirmationModalBackdrop));
+
+            confirmSendBtn.addEventListener('click', () => {
+                stopInputBtn.disabled = false;
+                
+                if (saveImageCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = imagePreviewElement.naturalWidth;
+                        canvas.height = imagePreviewElement.naturalHeight;
+                        ctx.drawImage(imagePreviewElement, 0, 0);
+
+                        const a = document.createElement('a');
+                        const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
+                        const date = new Date();
+                        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                        a.download = `easy-register_${machineName}_${timestamp}.png`;
+
+                        a.href = canvas.toDataURL('image/png');
+
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    } catch (e) {
+                        console.error("Erreur lors de la sauvegarde de l'image via canvas:", e);
+                        alert("Une erreur est survenue lors de la sauvegarde de l'image.");
+                    }
+                }
+                
+                if (showSequenceCheckbox.checked) {
+                    generateAndShowSequence();
+                }
+                
+                closeModal(confirmationModal, confirmationModalBackdrop);
+
+                const originalText = sendToScreenBtn.textContent;
+                sendToScreenBtn.textContent = 'Envoyé !';
+                sendToScreenBtn.classList.remove('btn-info');
+                sendToScreenBtn.classList.add('btn-success');
+                setTimeout(() => {
+                    sendToScreenBtn.textContent = originalText;
+                    sendToScreenBtn.classList.remove('btn-success');
+                    sendToScreenBtn.classList.add('btn-info');
+                }, 2000);
+            });
+            
+            stopInputBtn.addEventListener('click', () => {
+                if (stopInputBtn.disabled) return;
+                closeModal(confirmationModal, confirmationModalBackdrop);
+                console.log('Saisie arrêtée.');
+            });
+
+            openSettingsBtn.addEventListener('click', () => {
+                closeModal(optionsModal, optionsModalBackdrop);
+                passwordInput.value = '';
+                showModal(passwordModal, passwordModalBackdrop);
+                passwordInput.focus();
+            });
+            
+            openSequenceEditorBtn.addEventListener('click', () => {
+                populateSequenceEditor();
+                closeModal(settingsModal, settingsModalBackdrop);
+                showModal(sequenceEditorModal, sequenceEditorModalBackdrop);
+            });
+
+            closeSequenceEditorBtn.addEventListener('click', () => closeModal(sequenceEditorModal, sequenceEditorModalBackdrop));
+            closeSequenceDisplayBtn.addEventListener('click', () => closeModal(sequenceDisplayModal, sequenceDisplayModalBackdrop));
+
+            cancelPasswordBtn.addEventListener('click', () => closeModal(passwordModal, passwordModalBackdrop));
+            submitPasswordBtn.addEventListener('click', handlePasswordSubmit);
+            passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handlePasswordSubmit(); } });
+            closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
+
+            machineNameInput.addEventListener('input', (e) => {
+                machineNameDisplay.textContent = e.target.value || 'nom de la machine';
+                saveState();
+            });
+            
+            flexoCountSlider.addEventListener('input', (e) => {
+                const count = parseInt(e.target.value, 10);
+                flexoCountValue.textContent = count;
+                resetSession();
+                generateMarkerButtons(count);
+                initializeDefaultSequence(count);
+            });
+            
+            pixelToMmRatioInput.addEventListener('input', () => {
+                updateCorrections();
+                saveState();
+            });
+            
+            bluetoothDeviceNameInput.addEventListener('input', (e) => {
+                btDeviceName = e.target.value;
+                saveState();
+            });
+            
+            saveImageCheckbox.addEventListener('change', saveState);
+            showSequenceCheckbox.addEventListener('change', saveState);
+            
+            addSequenceActionBtn.addEventListener('click', () => {
+                const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'Nouvelle Action');
+                if (!sequence) {
+                    sequence = [];
+                }
+                sequence.push(newAction);
+                populateSequenceEditor();
+            });
+
+            saveSequenceBtn.addEventListener('click', saveSequenceFromEditor);
+
+            bluetoothSearchBtn.addEventListener('click', async () => {
+                if (connectedDevice) {
+                    connectedDevice.gatt.disconnect();
+                    return;
+                }
+                if (!btDeviceName) {
+                    alert("Veuillez d'abord renseigner le nom de l'appareil Bluetooth dans les paramètres.");
+                    return;
+                }
+                 if (!navigator.bluetooth) {
+                    alert("L'API Web Bluetooth n'est pas supportée sur ce navigateur. Elle ne fonctionne que sur un site sécurisé (https).");
+                    return;
+                 }
+
+                try {
+                    console.log(`Recherche de l'appareil: ${btDeviceName}`);
+                    const device = await navigator.bluetooth.requestDevice({
+                        filters: [{ name: btDeviceName }],
+                        optionalServices: ['battery_service', 'device_information'] 
+                    });
+
+                    console.log('Appareil trouvé:', device.name);
+                    connectedDevice = device;
+                    connectedDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                    
+                    const server = await connectedDevice.gatt.connect();
+                    console.log('Connecté au serveur GATT:', server);
+
+                    bluetoothStatus.style.backgroundColor = 'var(--color-success)';
+                    bluetoothBtnText.textContent = device.name;
+                    alert(`Connecté à ${device.name}`);
+
+                } catch(error) {
+                    console.error('Erreur Bluetooth:', error);
+                    alert(`Erreur Bluetooth: ${error.message}. Assurez-vous d'être sur une page sécurisée (https).`);
+                }
+            });
+
             exportConfigBtn.addEventListener('click', () => {
                 const config = {
                     machineName: machineNameInput.value,
@@ -1717,6 +1739,7 @@
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
                     saveImage: saveImageCheckbox.checked,
+                    showSequence: showSequenceCheckbox.checked,
                     sequence: sequence
                 };
                 const configJson = JSON.stringify(config, null, 2);
@@ -1757,7 +1780,6 @@
                 event.target.value = '';
             });
 
-            // --- Logique pour le D-Pad ---
             let dpadInterval = null;
             const startDpadMove = (dx, dy) => {
                 if (dpadInterval) clearInterval(dpadInterval);
@@ -1778,8 +1800,7 @@
             ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(evt => {
                 document.body.addEventListener(evt, stopDpadMove);
             });
-
-            // --- Logique pour le collage depuis le presse-papiers ---
+            
              document.addEventListener('paste', (event) => {
                 const items = (event.clipboardData || event.originalEvent.clipboardData).items;
                 for (let i = 0; i < items.length; i++) {
@@ -1795,13 +1816,14 @@
                 }
             });
 
-            // --- Initialisation ---
-            loadState();
-            
             document.addEventListener('mouseup', dragEnd);
             document.addEventListener('touchend', dragEnd);
             document.addEventListener('mousemove', drag);
             document.addEventListener('touchmove', drag, { passive: false });
+
+            // --- Initialisation ---
+            loadState();
+            
         });
     </script>
 
