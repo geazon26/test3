@@ -440,7 +440,8 @@
             border-top: 1px solid var(--color-border);
             flex-shrink: 0;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: flex-end;
             gap: 0.75rem;
         }
 
@@ -666,8 +667,16 @@
                 <label for="saveImageCheckbox">Save Image</label>
             </div>
              <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
+                <input type="checkbox" id="saveImageWithCrossCheckbox">
+                <label for="saveImageWithCrossCheckbox">Save image with cross</label>
+            </div>
+             <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
                 <input type="checkbox" id="showSequenceCheckbox">
                 <label for="showSequenceCheckbox">Generated Sequence</label>
+            </div>
+            <div class="checkbox-group" style="margin-top: 1rem; justify-content: flex-start;">
+                <input type="checkbox" id="exportSequenceCheckbox">
+                <label for="exportSequenceCheckbox">Export Sequence</label>
             </div>
             <div>
                 <label>Configuration Management</label>
@@ -694,13 +703,19 @@
              <!-- Coordinate fields will be generated here -->
         </div>
         <div class="modal-footer">
-             <button id="saveSequenceBtn" class="btn btn-success">
-                 <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.25rem; width: 1.25rem; vertical-align: middle; margin-right: 0.5rem;" viewBox="0 0 20 20" fill="currentColor">
-                   <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293zM5 4a2 2 0 012-2h6a2 2 0 012 2v2a1 1 0 102 0V4a4 4 0 00-4-4H7a4 4 0 00-4 4v12a4 4 0 004 4h6a4 4 0 004-4v-2a1 1 0 10-2 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4z" />
-                 </svg>
-                 <span>Save</span>
-               </button>
-             <button id="closeSequenceEditorBtn" class="btn btn-light">Close</button>
+            <div>
+                <label for="sequenceDelayInput" class="label-text" style="margin-bottom: 0.25rem;">Delay (s)</label>
+                <input type="number" id="sequenceDelayInput" value="0" min="0" step="0.1" style="width: 8rem;">
+            </div>
+             <div class="button-group">
+                 <button id="saveSequenceBtn" class="btn btn-success">
+                     <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.25rem; width: 1.25rem; vertical-align: middle; margin-right: 0.5rem;" viewBox="0 0 20 20" fill="currentColor">
+                       <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293zM5 4a2 2 0 012-2h6a2 2 0 012 2v2a1 1 0 102 0V4a4 4 0 00-4-4H7a4 4 0 00-4 4v12a4 4 0 004 4h6a4 4 0 004-4v-2a1 1 0 10-2 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4z" />
+                     </svg>
+                     <span>Save</span>
+                   </button>
+                 <button id="closeSequenceEditorBtn" class="btn btn-light">Close</button>
+             </div>
         </div>
     </div>
     
@@ -779,7 +794,9 @@
             const flexoCountValue = document.getElementById('flexoCountValue');
             const bluetoothDeviceNameInput = document.getElementById('bluetoothDeviceNameInput');
             const saveImageCheckbox = document.getElementById('saveImageCheckbox');
+            const saveImageWithCrossCheckbox = document.getElementById('saveImageWithCrossCheckbox');
             const showSequenceCheckbox = document.getElementById('showSequenceCheckbox');
+            const exportSequenceCheckbox = document.getElementById('exportSequenceCheckbox');
             const pixelToMmRatioInput = document.getElementById('pixelToMmRatioInput');
             const importConfigBtn = document.getElementById('importConfigBtn');
             const exportConfigBtn = document.getElementById('exportConfigBtn');
@@ -793,6 +810,7 @@
             const sequenceFieldsContainer = document.getElementById('sequence-fields-container');
             const addSequenceActionBtn = document.getElementById('addSequenceActionBtn');
             const saveSequenceBtn = document.getElementById('saveSequenceBtn');
+            const sequenceDelayInput = document.getElementById('sequenceDelayInput');
 
 
             // --- Sequence Display Modal ---
@@ -865,7 +883,10 @@
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
                     saveImage: saveImageCheckbox.checked,
+                    saveImageWithCross: saveImageWithCrossCheckbox.checked,
                     showSequence: showSequenceCheckbox.checked,
+                    exportSequence: exportSequenceCheckbox.checked,
+                    sequenceDelay: parseFloat(sequenceDelayInput.value) || 0,
                     sequence: sequence,
                 };
                 localStorage.setItem('easyRegisterState', JSON.stringify(config));
@@ -898,11 +919,22 @@
                 if (typeof config.saveImage === 'boolean') {
                     saveImageCheckbox.checked = config.saveImage;
                 }
+                if (typeof config.saveImageWithCross === 'boolean') {
+                    saveImageWithCrossCheckbox.checked = config.saveImageWithCross;
+                }
                 if (typeof config.showSequence === 'boolean') {
                     showSequenceCheckbox.checked = config.showSequence;
                 }
-                if (config.sequence) {
+                if (typeof config.exportSequence === 'boolean') {
+                    exportSequenceCheckbox.checked = config.exportSequence;
+                }
+                if (typeof config.sequenceDelay === 'number') {
+                    sequenceDelayInput.value = config.sequenceDelay;
+                }
+                if (config.sequence && config.sequence.length > 0) {
                     sequence = config.sequence;
+                } else {
+                    initializeDefaultSequence(parseInt(flexoCountSlider.value, 10));
                 }
                 updateCorrections();
             }
@@ -941,7 +973,8 @@
                 } else {
                     const initialFlexoCount = 6;
                     generateMarkerButtons(initialFlexoCount);
-                    saveImageCheckbox.checked = true; // Set to true by default
+                    saveImageCheckbox.checked = false; // Set to false by default
+                    saveImageWithCrossCheckbox.checked = false; // Set to false by default
                     initializeDefaultSequence(initialFlexoCount);
                 }
             }
@@ -1134,18 +1167,41 @@
                 showModal(settingsModal, settingsModalBackdrop);
             }
             
-             function createSequenceAction(id, type, flexoId, name, x = '', y = '') {
-                 return { id, type, flexoId, name, x, y };
+             function createSequenceAction(id, type, flexoId, name, x = '', y = '', conditionTargetType = null) {
+                 return { id, type, flexoId, name, x, y, conditionTargetType };
             }
 
             function initializeDefaultSequence(flexoCount) {
                 sequence = []; // Reset the global sequence
+                
+                // Generate for Flexos
                 for (let i = 1; i <= flexoCount; i++) {
-                    sequence.push(createSequenceAction(`f${i}_reg`, 'FLEXO_REG', `F${i}`, `F${i} Register`));
-                    sequence.push(createSequenceAction(`f${i}_cen`, 'FLEXO_CEN', `F${i}`, `F${i} Centering`));
+                    const prefix = `F${i}`;
+                    sequence.push(createSequenceAction(`${prefix}_select`, 'INTERMEDIATE_CLICK', prefix, `${prefix} Selection`, '', '', 'FLEXO_REG'));
+                    sequence.push(createSequenceAction(`${prefix}_clic_reg`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic Register`, '', '', 'FLEXO_REG'));
+                    sequence.push(createSequenceAction(`${prefix}_clic_pad_reg`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic pavet numérique`, '', '', 'FLEXO_REG'));
+                    sequence.push(createSequenceAction(`${prefix}_reg`, 'FLEXO_REG', prefix, `${prefix} Register`));
+                    sequence.push(createSequenceAction(`${prefix}_clic_valid_reg`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic validation`, '', '', 'FLEXO_REG'));
+                    
+                    sequence.push(createSequenceAction(`${prefix}_clic_cen`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic centering`, '', '', 'FLEXO_CEN'));
+                    sequence.push(createSequenceAction(`${prefix}_clic_pad_cen`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic pavet numérique`, '', '', 'FLEXO_CEN'));
+                    sequence.push(createSequenceAction(`${prefix}_cen`, 'FLEXO_CEN', prefix, `${prefix} Centering`));
+                    sequence.push(createSequenceAction(`${prefix}_clic_valid_cen`, 'INTERMEDIATE_CLICK', prefix, `${prefix} clic validation`, '', '', 'FLEXO_CEN'));
                 }
-                sequence.push(createSequenceAction('d_reg', 'DIECUT_REG', 'D', 'Die-Cut Register'));
-                sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', 'D', 'Die-Cut Centering'));
+                
+                // Generate for Die-Cutter
+                const d_prefix = 'D';
+                sequence.push(createSequenceAction(`${d_prefix}_select`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut Selection`, '', '', 'DIECUT_REG'));
+                sequence.push(createSequenceAction(`${d_prefix}_clic_reg`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic Register`, '', '', 'DIECUT_REG'));
+                sequence.push(createSequenceAction(`${d_prefix}_clic_pad_reg`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic pavet numérique`, '', '', 'DIECUT_REG'));
+                sequence.push(createSequenceAction('d_reg', 'DIECUT_REG', d_prefix, 'Die-Cut Register'));
+                sequence.push(createSequenceAction(`${d_prefix}_clic_valid_reg`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic validation`, '', '', 'DIECUT_REG'));
+
+                sequence.push(createSequenceAction(`${d_prefix}_clic_cen`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic centering`, '', '', 'DIECUT_CEN'));
+                sequence.push(createSequenceAction(`${d_prefix}_clic_pad_cen`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic pavet numérique`, '', '', 'DIECUT_CEN'));
+                sequence.push(createSequenceAction('d_cen', 'DIECUT_CEN', d_prefix, 'Die-Cut Centering'));
+                sequence.push(createSequenceAction(`${d_prefix}_clic_valid_cen`, 'INTERMEDIATE_CLICK', d_prefix, `Die-Cut clic validation`, '', '', 'DIECUT_CEN'));
+
                 saveState();
             }
             
@@ -1285,11 +1341,144 @@
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             }
 
+            function generateSequenceString() {
+                const pixelToMmRatio = parseFloat(pixelToMmRatioInput.value) || 1;
+                const delay = parseFloat(sequenceDelayInput.value) || 0;
+
+                // --- Pre-computation and validation ---
+                const selectedRadio = document.querySelector('.radio-selector:checked');
+                if (!selectedRadio) return "No reference marker selected.";
+                
+                const mainMarkerId = selectedRadio.dataset.targetButton;
+                const mainMarkerEl = document.querySelector(`.draggable-marker[data-marker-id="${mainMarkerId}"]`);
+                if (!mainMarkerEl) return `Reference marker ${mainMarkerId} not found on the image.`;
+                
+                const mainX_px = parseFloat(mainMarkerEl.style.left);
+                const mainY_px = parseFloat(mainMarkerEl.style.top);
+
+                const placedMarkers = new Map();
+                document.querySelectorAll('.draggable-marker').forEach(m => {
+                    placedMarkers.set(m.dataset.markerId, {
+                        x: parseFloat(m.style.left),
+                        y: parseFloat(m.style.top)
+                    });
+                });
+                
+                if (!placedMarkers.has(mainMarkerId)) {
+                     return `Reference marker ${mainMarkerId} is not on the image.`;
+                }
+
+                const calculatedValues = {}; // Stores only non-zero values
+
+                // --- 1. First Pass: Calculate and store only non-zero values ---
+                placedMarkers.forEach((pos, id) => {
+                    if (id === mainMarkerId) return; // Skip comparing reference to itself
+
+                    // Calculate Register
+                    const correctionY_px = mainY_px - pos.y;
+                    const regValue = correctionY_px / pixelToMmRatio;
+                    if (regValue.toFixed(2) !== '0.00' && regValue.toFixed(2) !== '-0.00') {
+                        const key = id.startsWith('F') ? `${id}_FLEXO_REG` : 'D_DIECUT_REG';
+                        calculatedValues[key] = regValue;
+                    }
+
+                    // Calculate Centering
+                    const correctionX_px = mainX_px - pos.x;
+                    const cenValue = correctionX_px / pixelToMmRatio;
+                    if (cenValue.toFixed(2) !== '0.00' && cenValue.toFixed(2) !== '-0.00') {
+                        const key = id.startsWith('F') ? `${id}_FLEXO_CEN` : 'D_DIECUT_CEN';
+                        calculatedValues[key] = cenValue;
+                    }
+                });
+                
+                const masterSequence = sequence || [];
+                const finalLines = [];
+
+                // --- 2. Second Pass: Build output based on calculated values and master sequence order ---
+                masterSequence.forEach(action => {
+                    let valueKey, conditionKey;
+                    
+                    const id = action.flexoId;
+                    if(!placedMarkers.has(id)) return; // Skip if the marker is not on the image
+                    
+                    // Determine the key to check in calculatedValues
+                    if (action.type === 'INTERMEDIATE_CLICK') {
+                        conditionKey = action.conditionTargetType === 'FLEXO_REG' ? `${id}_FLEXO_REG` :
+                                       action.conditionTargetType === 'FLEXO_CEN' ? `${id}_FLEXO_CEN` :
+                                       action.conditionTargetType === 'DIECUT_REG' ? `D_DIECUT_REG` :
+                                       `D_DIECUT_CEN`;
+                    } else {
+                         valueKey = action.type === 'FLEXO_REG' ? `${id}_FLEXO_REG` :
+                                    action.type === 'FLEXO_CEN' ? `${id}_FLEXO_CEN` :
+                                    action.type === 'DIECUT_REG' ? `D_DIECUT_REG` :
+                                    `D_DIECUT_CEN`;
+                    }
+
+                    if (valueKey && calculatedValues.hasOwnProperty(valueKey)) {
+                        // This is a Register or Centering action with a non-zero value
+                        const num = calculatedValues[valueKey];
+                        let formattedValue;
+                        const fixedValue = num.toFixed(2);
+
+                        if (Math.abs(num) < 1 && num !== 0) {
+                            formattedValue = fixedValue.startsWith('0.') ? fixedValue.substring(1) : fixedValue.replace('-0.', '-.');
+                        } else {
+                            formattedValue = fixedValue;
+                        }
+                        finalLines.push(`${action.name}: ${formattedValue}`);
+
+                    } else if (conditionKey && calculatedValues.hasOwnProperty(conditionKey)) {
+                        // This is a preceding click action whose target value is non-zero
+                        finalLines.push(`${action.name}: (${action.x},${action.y})`);
+                    }
+                });
+
+                // --- 3. Add delays between the final, filtered lines ---
+                if (delay > 0 && finalLines.length > 1) {
+                    const linesWithDelay = [];
+                    for (let i = 0; i < finalLines.length; i++) {
+                        linesWithDelay.push(finalLines[i]);
+                        if (i < finalLines.length - 1) {
+                            linesWithDelay.push(`Delay: ${delay}`);
+                        }
+                    }
+                    return linesWithDelay.join('\n');
+                } else {
+                    return finalLines.join('\n');
+                }
+            }
+            
+            function exportSequenceToFile() {
+                const sequenceText = generateSequenceString();
+                if (!sequenceText || sequenceText.includes("No reference marker")) {
+                    console.warn("Sequence export skipped: no valid data to export.");
+                    return;
+                }
+
+                const blob = new Blob([sequenceText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                a.style.position = 'absolute';
+                a.style.left = '-10000px';
+                a.style.top = '0px';
+                a.href = url;
+                a.download = `easy-register_sequence_${machineName}_${timestamp}.txt`;
+                
+                document.body.appendChild(a);
+                a.click(); 
+
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 500);
+            }
 
             function generateAndShowSequence() {
-                let generatedSequence = [];
-// ... existing code ... -->
-                sequenceOutput.textContent = generatedSequence.join('\n');
+                sequenceOutput.textContent = generateSequenceString();
                 showModal(sequenceDisplayModal, sequenceDisplayModalBackdrop);
             }
 
@@ -1684,7 +1873,7 @@
                         a.style.top = '0px';
 
                         a.href = url;
-                        a.download = `easy-register_${machineName}_${timestamp}_x.png`;
+                        a.download = `easy-register_${machineName}_${timestamp}_x.jpeg`;
                         
                         document.body.appendChild(a);
                         a.click(); 
@@ -1698,7 +1887,7 @@
                         console.error("Error saving image with markers:", e);
                         alert("An error occurred while saving the image with markers.");
                     }
-                }, 'image/png');
+                }, 'image/jpeg', 0.7);
             }
 
             // ===============================================
@@ -1755,7 +1944,7 @@
                     canvas.toBlob((blob) => {
                         blobForDownload = blob; // Store the blob
                         showModal(confirmationModal, confirmationModalBackdrop); // Show modal once blob is ready
-                    }, 'image/png');
+                    }, 'image/jpeg', 0.7);
                 } else {
                     // If not saving, just show the modal immediately
                     showModal(confirmationModal, confirmationModalBackdrop);
@@ -1783,7 +1972,7 @@
                         a.style.top = '0px';
 
                         a.href = url;
-                        a.download = `easy-register_${machineName}_${timestamp}.png`;
+                        a.download = `easy-register_${machineName}_${timestamp}.jpeg`;
                         
                         document.body.appendChild(a);
                         a.click(); // This is now synchronous to the user's click on "Yes"
@@ -1804,7 +1993,7 @@
                     }
                 }
                 
-                if (saveImageCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
+                if (saveImageWithCrossCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
                     saveImageWithMarkers();
                 }
 
@@ -1812,6 +2001,10 @@
                     generateAndShowSequence();
                 }
                 
+                if (exportSequenceCheckbox.checked) {
+                    exportSequenceToFile();
+                }
+
                 // closeModal(confirmationModal, confirmationModalBackdrop);
 
                 const originalText = sendToScreenBtn.textContent;
@@ -1827,8 +2020,33 @@
             
             stopInputBtn.addEventListener('click', () => {
                 if (stopInputBtn.disabled) return;
+                
+                // --- Generate and download the STOP file ---
+                const stopText = 'STOP HID INPUT';
+                const blob = new Blob([stopText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+
+                a.style.position = 'absolute';
+                a.style.left = '-10000px';
+                a.style.top = '0px';
+                a.href = url;
+                a.download = `stop_input_${timestamp}.txt`;
+                
+                document.body.appendChild(a);
+                a.click(); 
+
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 500);
+
+                // --- Original functionality ---
                 closeModal(confirmationModal, confirmationModalBackdrop);
-                console.log('Input stopped.');
+                console.log('Input stopped and STOP file generated.');
             });
 
             optionsBtn.addEventListener('click', () => showModal(optionsModal, optionsModalBackdrop));
@@ -1897,7 +2115,9 @@
             });
             
             saveImageCheckbox.addEventListener('change', saveState);
+            saveImageWithCrossCheckbox.addEventListener('change', saveState);
             showSequenceCheckbox.addEventListener('change', saveState);
+            exportSequenceCheckbox.addEventListener('change', saveState);
             
             addSequenceActionBtn.addEventListener('click', () => {
                 const newAction = createSequenceAction(`custom_${Date.now()}`, 'INTERMEDIATE_CLICK', null, 'New Action');
@@ -1909,6 +2129,7 @@
             });
 
             saveSequenceBtn.addEventListener('click', saveSequenceFromEditor);
+            sequenceDelayInput.addEventListener('input', saveState);
 
             bluetoothSearchBtn.addEventListener('click', async () => {
                 if (connectedDevice) {
@@ -1950,7 +2171,9 @@
                     pixelToMmRatio: parseFloat(pixelToMmRatioInput.value),
                     bluetoothDeviceName: bluetoothDeviceNameInput.value,
                     saveImage: saveImageCheckbox.checked,
+                    saveImageWithCross: saveImageWithCrossCheckbox.checked,
                     showSequence: showSequenceCheckbox.checked,
+                    exportSequence: exportSequenceCheckbox.checked,
                     sequence: sequence
                 };
                 const configJson = JSON.stringify(config, null, 2);
@@ -2041,9 +2264,4 @@
 
 </body>
 </html>
-
-
-
-
-
 
