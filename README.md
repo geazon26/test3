@@ -38,6 +38,8 @@
             margin: 0;
             padding: 1rem;
             min-height: 100vh;
+            overflow-x: hidden; /* Empêche le défilement horizontal */
+            touch-action: manipulation; /* Empêche le zoom par double-tap */
         }
         
         /* --- Main Containers --- */
@@ -66,6 +68,37 @@
             align-items: center;
             gap: 1rem;
             margin-bottom: 1.5rem;
+            transition: all 0.4s ease-in-out;
+        }
+        
+        .header-controls.centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin-bottom: 0;
+            z-index: 1; /* Ensure it's above other elements in the initial view */
+        }
+
+        .camera-icon-label {
+            padding: 1rem;
+            border-radius: 9999px;
+            transition: padding 0.4s ease-in-out, background-color 0.2s ease-in-out;
+        }
+
+        .header-controls.centered .camera-icon-label {
+            padding: 2rem;
+        }
+        
+        .camera-icon-svg {
+            height: 1.5rem; 
+            width: 1.5rem;
+            transition: all 0.4s ease-in-out;
+        }
+
+        .header-controls.centered .camera-icon-svg {
+            height: 9rem; /* Large size for initial view */
+            width: 9rem;
         }
         
         .footer-controls {
@@ -511,9 +544,9 @@
     <div class="main-container no-image">
         <h1 class="hidden">(<span id="machineNameDisplay">machine name</span>)</h1>
 
-        <div class="header-controls">
-            <label for="imageUpload" class="btn btn-primary" style="padding: 0.75rem; border-radius: 9999px;">
-                <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.5rem; width: 1.5rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <div class="header-controls centered">
+            <label for="imageUpload" class="btn camera-icon-label">
+                <svg xmlns="http://www.w3.org/2000/svg" class="camera-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
@@ -699,6 +732,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             // --- DOM Element Retrieval (part 1) ---
             const mainContainer = document.querySelector('.main-container');
+            const headerControls = document.querySelector('.header-controls');
+            const cameraIconLabel = document.querySelector('.camera-icon-label');
             const imageUploadInput = document.getElementById('imageUpload');
             const imagePreviewElement = document.getElementById('imagePreview');
             const imageDisplayArea = document.getElementById('imageDisplayArea');
@@ -809,6 +844,19 @@
                 modal.classList.add('hidden');
                 backdrop.classList.add('hidden');
             }
+            
+            function applyColorTheme(color) {
+                if (color === 'rainbow-gradient') {
+                    const rainbowGradient = 'conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #FFFF00 60deg, #00FF00 120deg, #00FFFF 180deg, #0000FF 240deg, #FF00FF 300deg, #FF0000 360deg)';
+                    document.documentElement.style.setProperty('--main-marker-bg', rainbowGradient);
+                    document.documentElement.style.setProperty('--main-marker-fg', '#1F2937');
+                    cameraIconLabel.style.background = 'conic-gradient(from 180deg at 50% 50%, red, yellow, lime, aqua, blue, magenta, red)';
+                } else {
+                    document.documentElement.style.setProperty('--main-marker-bg', color);
+                    document.documentElement.style.setProperty('--main-marker-fg', color);
+                    cameraIconLabel.style.background = color;
+                }
+            }
 
             function saveState() {
                 const config = {
@@ -911,6 +959,7 @@
             
             function resetSession() {
                 clearMarkersAndCorrections();
+                headerControls.classList.add('centered');
                 mainContainer.classList.add('no-image');
                 imageDisplayArea.classList.add('hidden');
                 controlsContainer.classList.add('hidden');
@@ -925,6 +974,7 @@
 
             function setImageAsPreview(imageURL, blob) {
                 clearMarkersAndCorrections(); 
+                headerControls.classList.remove('centered');
                 mainContainer.classList.remove('no-image');
                 imagePreviewElement.src = imageURL;
                  if (blob) {
@@ -1584,18 +1634,12 @@
 
                 if (index === 0) {
                     swatch.classList.add('selected');
-                    document.documentElement.style.setProperty('--main-marker-bg', color);
-                    document.documentElement.style.setProperty('--main-marker-fg', color);
+                    applyColorTheme(color); // Set initial theme
                 }
+                
                 swatch.addEventListener('click', () => {
                     const selectedColor = swatch.dataset.color;
-                    if (selectedColor === 'rainbow-gradient') {
-                        document.documentElement.style.setProperty('--main-marker-bg', 'conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #FFFF00 60deg, #00FF00 120deg, #00FFFF 180deg, #0000FF 240deg, #FF00FF 300deg, #FF0000 360deg)');
-                        document.documentElement.style.setProperty('--main-marker-fg', '#1F2937'); // Use dark text for contrast
-                    } else {
-                        document.documentElement.style.setProperty('--main-marker-bg', selectedColor);
-                        document.documentElement.style.setProperty('--main-marker-fg', selectedColor);
-                    }
+                    applyColorTheme(selectedColor);
                     
                     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
                     swatch.classList.add('selected');
@@ -1909,6 +1953,7 @@
 
 </body>
 </html>
+
 
 
 
