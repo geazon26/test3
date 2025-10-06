@@ -7,7 +7,8 @@
     <style>
         /* --- General Variables and Styles --- */
         :root {
-            --main-marker-color: #FF0000; /* Default Color (Bright Red) */
+            --main-marker-bg: #FF0000; /* Default Background (Bright Red) */
+            --main-marker-fg: #FF0000; /* Default Foreground (Bright Red) */
             --color-primary: #3B82F6;
             --color-primary-hover: #2563EB;
             --color-secondary: #6B7280;
@@ -291,7 +292,7 @@
             background-color: #D1D5DB;
         }
         .marker-btn.active-marker-highlight {
-            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--main-marker-color);
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--main-marker-fg);
         }
         .marker-btn.reference {
              background-color: #FBBF24;
@@ -316,7 +317,7 @@
             font-size: 0.875rem;
         }
         #sendToScreenBtn {
-            margin-top: 1rem;
+            margin-bottom: 1rem;
             width: 100%;
         }
         
@@ -431,7 +432,7 @@
         .draggable-marker.locked { cursor: default; }
         .marker-cross-h, .marker-cross-v {
             position: absolute;
-            background-color: var(--main-marker-color);
+            background: var(--main-marker-bg);
             box-shadow: 0 0 2px white;
         }
         .marker-cross-h { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
@@ -445,7 +446,7 @@
             padding-left: 5px;
             font-weight: 500;
             white-space: nowrap;
-            color: var(--main-marker-color);
+            color: var(--main-marker-fg);
             text-shadow: 0 0 3px white, 0 0 3px white;
         }
         .draggable-marker.locked .marker-label { display: none; }
@@ -478,7 +479,7 @@
 
         /* --- Magnifier, Trash, D-Pad (kept) --- */
         #magnifier-glass { position: absolute; width: 150px; height: 150px; border: 3px solid #000; border-radius: 50%; overflow: hidden; pointer-events: none; z-index: 10; background-repeat: no-repeat; background-color: white; top: 0.5rem; right: 0.5rem; }
-        .magnifier-crosshair-h, .magnifier-crosshair-v { position: absolute; background-color: rgba(255, 0, 0, 0.7); z-index: 11; }
+        .magnifier-crosshair-h, .magnifier-crosshair-v { position: absolute; background: var(--main-marker-bg); box-shadow: 0 0 2px white; z-index: 11; }
         .magnifier-crosshair-h { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
         .magnifier-crosshair-v { left: 50%; top: 0; height: 100%; width: 1px; transform: translateX(-50%); }
         #trashCan { position: absolute; top: 0.5rem; left: 0.5rem; width: 3rem; height: 3rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s, background-color 0.2s; z-index: 6; cursor: pointer; }
@@ -508,11 +509,14 @@
 <body>
 
     <div class="main-container no-image">
-        <h1>(<span id="machineNameDisplay">machine name</span>)</h1>
+        <h1 class="hidden">(<span id="machineNameDisplay">machine name</span>)</h1>
 
         <div class="header-controls">
-            <label for="imageUpload" class="btn btn-primary">
-                Capture
+            <label for="imageUpload" class="btn btn-primary" style="padding: 0.75rem; border-radius: 9999px;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="height: 1.5rem; width: 1.5rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
             </label>
             <input type="file" id="imageUpload" class="hidden" accept="image/*">
         </div>
@@ -547,10 +551,10 @@
         </div>
         
         <div id="correctionsContainer" class="hidden">
+            <button id="sendToScreenBtn" class="btn btn-info">Send to Screen</button>
             <div id="correctionsText">
                 <!-- Results will be displayed here -->
             </div>
-            <button id="sendToScreenBtn" class="btn btn-info">Send to Screen</button>
         </div>
 
         <div class="options-wrapper">
@@ -788,8 +792,8 @@
             
             const colorPaletteContainer = document.getElementById('color-palette');
             const colors = [
-                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF',
-                '#00FFFF', '#FF4500', '#7FFF00', '#9400D3', '#00FA9A'
+                '#FF0000', '#00FF00', '#0000FF', '#000000', '#FF00FF',
+                'rainbow-gradient', '#FF4500', '#7FFF00', '#9400D3', '#00FA9A'
             ];
             
             // ===============================================
@@ -820,9 +824,15 @@
             }
             
             function applyConfig(config) {
-                if (config.machineName) {
+                const machineNameHeader = document.querySelector('h1');
+                if (config.machineName && config.machineName.trim() !== '') {
                     machineNameInput.value = config.machineName;
                     machineNameDisplay.textContent = config.machineName;
+                    machineNameHeader.classList.remove('hidden');
+                } else {
+                    machineNameInput.value = '';
+                    machineNameDisplay.textContent = 'machine name';
+                    machineNameHeader.classList.add('hidden');
                 }
                 if (config.flexoCount) {
                     const count = parseInt(config.flexoCount, 10);
@@ -1564,14 +1574,29 @@
             colors.forEach((color, index) => {
                 const swatch = document.createElement('div');
                 swatch.className = 'color-swatch';
-                swatch.style.backgroundColor = color;
                 swatch.dataset.color = color;
+
+                if (color === 'rainbow-gradient') {
+                    swatch.style.background = 'conic-gradient(from 180deg at 50% 50%, red, yellow, lime, aqua, blue, magenta, red)';
+                } else {
+                    swatch.style.backgroundColor = color;
+                }
+
                 if (index === 0) {
                     swatch.classList.add('selected');
-                    document.documentElement.style.setProperty('--main-marker-color', color);
+                    document.documentElement.style.setProperty('--main-marker-bg', color);
+                    document.documentElement.style.setProperty('--main-marker-fg', color);
                 }
                 swatch.addEventListener('click', () => {
-                    document.documentElement.style.setProperty('--main-marker-color', color);
+                    const selectedColor = swatch.dataset.color;
+                    if (selectedColor === 'rainbow-gradient') {
+                        document.documentElement.style.setProperty('--main-marker-bg', 'conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #FFFF00 60deg, #00FF00 120deg, #00FFFF 180deg, #0000FF 240deg, #FF00FF 300deg, #FF0000 360deg)');
+                        document.documentElement.style.setProperty('--main-marker-fg', '#1F2937'); // Use dark text for contrast
+                    } else {
+                        document.documentElement.style.setProperty('--main-marker-bg', selectedColor);
+                        document.documentElement.style.setProperty('--main-marker-fg', selectedColor);
+                    }
+                    
                     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
                     swatch.classList.add('selected');
                 });
@@ -1709,7 +1734,15 @@
             closeSettingsModalBtn.addEventListener('click', () => closeModal(settingsModal, settingsModalBackdrop));
 
             machineNameInput.addEventListener('input', (e) => {
-                machineNameDisplay.textContent = e.target.value || 'machine name';
+                const machineNameHeader = document.querySelector('h1');
+                const name = e.target.value;
+                if (name && name.trim() !== '') {
+                    machineNameDisplay.textContent = name;
+                    machineNameHeader.classList.remove('hidden');
+                } else {
+                    machineNameDisplay.textContent = 'machine name';
+                    machineNameHeader.classList.add('hidden');
+                }
                 saveState();
             });
             
@@ -1876,4 +1909,7 @@
 
 </body>
 </html>
+
+
+
 
