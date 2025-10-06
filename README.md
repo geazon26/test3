@@ -1617,6 +1617,90 @@
                 return corners[0];
             }
             
+            function saveImageWithMarkers() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = imagePreviewElement;
+
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                const scaleX = img.naturalWidth / img.width;
+                const scaleY = img.naturalHeight / img.height;
+
+                const markerBg = getComputedStyle(document.documentElement).getPropertyValue('--main-marker-bg').trim();
+                ctx.fillStyle = markerBg.includes('gradient') ? '#FF0000' : markerBg;
+                ctx.shadowColor = 'white';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                const containerRect = imageContainer.getBoundingClientRect();
+                const imageRect = img.getBoundingClientRect();
+                const imageOffsetX = imageRect.left - containerRect.left;
+                const imageOffsetY = imageRect.top - containerRect.top;
+
+                document.querySelectorAll('.draggable-marker').forEach(markerEl => {
+                    const leftOnContainer = parseFloat(markerEl.style.left);
+                    const topOnContainer = parseFloat(markerEl.style.top);
+
+                    const xOnDisplayedImage = leftOnContainer - imageOffsetX;
+                    const yOnDisplayedImage = topOnContainer - imageOffsetY;
+
+                    const finalX = xOnDisplayedImage * scaleX;
+                    const finalY = yOnDisplayedImage * scaleY;
+
+                    const currentSliderValue = markerSizeSlider.value;
+                    const scale = calculateScale(currentSliderValue);
+                    const markerBaseSize = 24;
+                    const crossBaseThickness = 2;
+
+                    const markerWidthOnCanvas = markerBaseSize * scale * scaleX;
+                    const markerHeightOnCanvas = markerBaseSize * scale * scaleY;
+                    const crossThicknessX = crossBaseThickness * scaleX;
+                    const crossThicknessY = crossBaseThickness * scaleY;
+
+                    ctx.fillRect(finalX - markerWidthOnCanvas / 2, finalY - crossThicknessY / 2, markerWidthOnCanvas, crossThicknessY);
+                    ctx.fillRect(finalX - crossThicknessX / 2, finalY - markerHeightOnCanvas / 2, crossThicknessX, markerHeightOnCanvas);
+                });
+
+                ctx.shadowBlur = 0; // Reset shadow
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        console.error("Failed to create blob for image with markers.");
+                        return;
+                    }
+                    try {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        const machineName = machineNameInput.value.replace(/\s+/g, '_') || 'capture';
+                        const date = new Date();
+                        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                        
+                        a.style.position = 'absolute';
+                        a.style.left = '-10000px';
+                        a.style.top = '0px';
+
+                        a.href = url;
+                        a.download = `easy-register_${machineName}_${timestamp}_x.png`;
+                        
+                        document.body.appendChild(a);
+                        a.click(); 
+
+                        setTimeout(() => {
+                            if (document.body.contains(a)) document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 500);
+
+                    } catch (e) {
+                        console.error("Error saving image with markers:", e);
+                        alert("An error occurred while saving the image with markers.");
+                    }
+                }, 'image/png');
+            }
+
             // ===============================================
             // SECTION 2: INITIAL SETUP & EVENT LISTENERS
             // ===============================================
@@ -1720,6 +1804,10 @@
                     }
                 }
                 
+                if (saveImageCheckbox.checked && imagePreviewElement.src && imagePreviewElement.naturalWidth > 0) {
+                    saveImageWithMarkers();
+                }
+
                 if (showSequenceCheckbox.checked) {
                     generateAndShowSequence();
                 }
@@ -1953,6 +2041,7 @@
 
 </body>
 </html>
+
 
 
 
