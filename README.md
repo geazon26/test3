@@ -33,10 +33,10 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: var(--color-bg-white);
+            background-color: var(--color-bg-light);
             color: var(--color-text-dark);
             margin: 0;
-            padding: 0;
+            padding: 1rem;
             min-height: 100vh;
             overflow-x: hidden; /* Empêche le défilement horizontal */
             touch-action: manipulation; /* Empêche le zoom par double-tap */
@@ -45,10 +45,12 @@
         /* --- Main Containers --- */
         .main-container {
             background-color: var(--color-bg-white);
-            padding: 1rem;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             width: 100%;
-            min-height: 100vh;
-            margin: 0;
+            max-width: 42rem;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             text-align: center;
@@ -56,6 +58,7 @@
         
         /* Style for initial display (no image) */
         .main-container.no-image {
+             min-height: calc(100vh - 4rem); /* Takes up height so auto margin works */
              padding-top: 5rem;
         }
 
@@ -278,16 +281,14 @@
         .hidden { display: none !important; }
         
         #imageDisplayArea {
-            margin-top: 0.5rem; /* Rapproché de l'entête */
-            margin-left: -1rem;
-            margin-right: -1rem;
+            margin-top: 2rem;
         }
         #imagePreview {
-            width: 100%;
             max-width: 100%;
-            display: block;
-            border-radius: 0;
-            box-shadow: none;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         #controlsContainer {
@@ -312,8 +313,7 @@
 
         .marker-btn {
             font-weight: 600;
-            padding: 0.575rem 1.15rem; /* Taille augmentée de 15% */
-            font-size: 1rem; /* Taille augmentée de 15% */
+            padding: 0.5rem 1rem;
             border-radius: 0.5rem;
             background-color: #E5E7EB;
             color: var(--color-text-dark);
@@ -347,7 +347,8 @@
         }
         #correctionsText {
             font-family: "Courier New", Courier, monospace;
-            font-size: 0.875rem;
+            font-size: 1rem;
+            font-weight: bold;
         }
         #sendToScreenBtn {
             margin-bottom: 1rem;
@@ -552,7 +553,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
             </label>
-            <input type="file" id="imageUpload" class="hidden" accept="image/*">
+            <input type="file" id="imageUpload" class="hidden" accept="image/*" capture="environment">
         </div>
 
         <div id="imageDisplayArea" class="hidden">
@@ -1024,12 +1025,6 @@
             }
 
             function updateCorrections() {
-                // Si aucune image n'est affichée, on s'assure que ce conteneur est masqué et on arrête la fonction.
-                if (imageDisplayArea.classList.contains('hidden')) {
-                    correctionsContainer.classList.add('hidden');
-                    return;
-                }
-
                 correctionsText.innerHTML = '';
                 sendToScreenBtn.classList.add('hidden');
 
@@ -1506,12 +1501,10 @@
                     console.log('Connected to GATT Server:', server);
                     connectedDevice = device;
 
-                    // Si la connexion réussit, met à jour le bouton avec le nom de l'appareil
                     bluetoothStatus.style.backgroundColor = 'var(--color-success)';
                     bluetoothBtnText.textContent = device.name;
                 } catch(error) {
                     console.error(`Failed to connect to ${device.name}:`, error);
-                    // En cas d'échec, réinitialise le bouton
                     bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
                     bluetoothBtnText.textContent = 'Search via Bluetooth';
                     connectedDevice = null;
@@ -1519,14 +1512,11 @@
                 }
             }
             
-            // Cette fonction tente de se connecter automatiquement au démarrage
-            // à un appareil Bluetooth déjà autorisé par l'utilisateur.
             async function autoConnectBluetooth() {
                 if (!navigator.bluetooth || typeof navigator.bluetooth.getDevices !== 'function') {
                     console.log("Web Bluetooth API or getDevices() not supported.");
                     return;
                 }
-                // Vérifie si un nom d'appareil est sauvegardé dans les paramètres
                 if (!btDeviceName) {
                     console.log("No Bluetooth device name saved in settings. Skipping auto-connect.");
                     return;
@@ -1534,11 +1524,9 @@
 
                 try {
                     console.log("Checking for previously permitted devices...");
-                    // Récupère les appareils auxquels le site a déjà eu la permission d'accéder
                     const devices = await navigator.bluetooth.getDevices();
                     const matchingDevice = devices.find(device => device.name === btDeviceName);
 
-                    // Si un appareil correspondant est trouvé, tente la connexion
                     if (matchingDevice) {
                         console.log(`Found permitted device: ${matchingDevice.name}. Attempting to auto-connect...`);
                         await connectToDevice(matchingDevice);
@@ -2284,9 +2272,5 @@
 
 </body>
 </html>
-
-
-
-
 
 
