@@ -33,10 +33,10 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: var(--color-bg-light);
+            background-color: var(--color-bg-white);
             color: var(--color-text-dark);
             margin: 0;
-            padding: 1rem;
+            padding: 0;
             min-height: 100vh;
             overflow-x: hidden; /* Empêche le défilement horizontal */
             touch-action: manipulation; /* Empêche le zoom par double-tap */
@@ -45,12 +45,10 @@
         /* --- Main Containers --- */
         .main-container {
             background-color: var(--color-bg-white);
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
             width: 100%;
-            max-width: 42rem;
-            margin: 0 auto;
+            min-height: 100vh;
+            margin: 0;
             display: flex;
             flex-direction: column;
             text-align: center;
@@ -58,7 +56,6 @@
         
         /* Style for initial display (no image) */
         .main-container.no-image {
-             min-height: calc(100vh - 4rem); /* Takes up height so auto margin works */
              padding-top: 5rem;
         }
 
@@ -1396,42 +1393,49 @@
 
                 // --- 2. Second Pass: Build output based on calculated values and master sequence order ---
                 masterSequence.forEach(action => {
-                    let valueKey, conditionKey;
-                    
                     const id = action.flexoId;
-                    if(!placedMarkers.has(id)) return; // Skip if the marker is not on the image
-                    
-                    // Determine the key to check in calculatedValues
-                    if (action.type === 'INTERMEDIATE_CLICK') {
-                        conditionKey = action.conditionTargetType === 'FLEXO_REG' ? `${id}_FLEXO_REG` :
-                                       action.conditionTargetType === 'FLEXO_CEN' ? `${id}_FLEXO_CEN` :
-                                       action.conditionTargetType === 'DIECUT_REG' ? `D_DIECUT_REG` :
-                                       `D_DIECUT_CEN`;
-                    } else {
-                         valueKey = action.type === 'FLEXO_REG' ? `${id}_FLEXO_REG` :
-                                    action.type === 'FLEXO_CEN' ? `${id}_FLEXO_CEN` :
-                                    action.type === 'DIECUT_REG' ? `D_DIECUT_REG` :
-                                    `D_DIECUT_CEN`;
+
+                    // Case 1: Action is for a marker not on the image, so skip.
+                    if (id && !placedMarkers.has(id)) {
+                        return; // continue
                     }
 
-                    if (valueKey && calculatedValues.hasOwnProperty(valueKey)) {
-                        // This is a Register or Centering action with a non-zero value
-                        const num = calculatedValues[valueKey];
-                        let formattedValue;
-                        const fixedValue = num.toFixed(2);
+                    let valueKey = null;
+                    let conditionKey = null;
 
-                        if (Math.abs(num) < 1 && num !== 0) {
-                            formattedValue = fixedValue.startsWith('0.') ? fixedValue.substring(1) : fixedValue.replace('-0.', '-.');
-                        } else {
-                            formattedValue = fixedValue;
+                    // Case 2: Action is a standard intermediate click with conditions
+                    if (action.type === 'INTERMEDIATE_CLICK') {
+                        if (action.conditionTargetType === 'FLEXO_REG') conditionKey = `${id}_FLEXO_REG`;
+                        else if (action.conditionTargetType === 'FLEXO_CEN') conditionKey = `${id}_FLEXO_CEN`;
+                        else if (action.conditionTargetType === 'DIECUT_REG') conditionKey = `D_DIECUT_REG`;
+                        else if (action.conditionTargetType === 'DIECUT_CEN') conditionKey = `D_DIECUT_CEN`;
+                        // This handles custom actions (no flexoId, no conditionTargetType)
+                        else if (!id && !action.conditionTargetType) {
+                            finalLines.push(`${action.name}: (${action.x},${action.y})`);
+                            return; // continue
                         }
-                        finalLines.push(`${action.name}: ${formattedValue}`);
+                    } 
+                    // Case 3: Action is a Register/Centering value calculation
+                    else {
+                        if (action.type === 'FLEXO_REG') valueKey = `${id}_FLEXO_REG`;
+                        else if (action.type === 'FLEXO_CEN') valueKey = `${id}_FLEXO_CEN`;
+                        else if (action.type === 'DIECUT_REG') valueKey = `D_DIECUT_REG`;
+                        else if (action.type === 'DIECUT_CEN') valueKey = `D_DIECUT_CEN`;
+                    }
 
+                    // Add line to output if the condition (a non-zero value exists) is met
+                    if (valueKey && calculatedValues.hasOwnProperty(valueKey)) {
+                        const num = calculatedValues[valueKey];
+                        const fixedValue = num.toFixed(2);
+                        let formattedValue = (Math.abs(num) < 1 && num !== 0)
+                            ? fixedValue.startsWith('0.') ? fixedValue.substring(1) : fixedValue.replace('-0.', '-.')
+                            : fixedValue;
+                        finalLines.push(`${action.name}: ${formattedValue}`);
                     } else if (conditionKey && calculatedValues.hasOwnProperty(conditionKey)) {
-                        // This is a preceding click action whose target value is non-zero
                         finalLines.push(`${action.name}: (${action.x},${action.y})`);
                     }
                 });
+
 
                 // --- 3. Add delays between the final, filtered lines ---
                 if (delay > 0 && finalLines.length > 1) {
@@ -1493,10 +1497,12 @@
                     console.log('Connected to GATT Server:', server);
                     connectedDevice = device;
 
+                    // Si la connexion réussit, met à jour le bouton avec le nom de l'appareil
                     bluetoothStatus.style.backgroundColor = 'var(--color-success)';
                     bluetoothBtnText.textContent = device.name;
                 } catch(error) {
                     console.error(`Failed to connect to ${device.name}:`, error);
+                    // En cas d'échec, réinitialise le bouton
                     bluetoothStatus.style.backgroundColor = 'var(--color-danger)';
                     bluetoothBtnText.textContent = 'Search via Bluetooth';
                     connectedDevice = null;
@@ -1504,11 +1510,14 @@
                 }
             }
             
+            // Cette fonction tente de se connecter automatiquement au démarrage
+            // à un appareil Bluetooth déjà autorisé par l'utilisateur.
             async function autoConnectBluetooth() {
                 if (!navigator.bluetooth || typeof navigator.bluetooth.getDevices !== 'function') {
                     console.log("Web Bluetooth API or getDevices() not supported.");
                     return;
                 }
+                // Vérifie si un nom d'appareil est sauvegardé dans les paramètres
                 if (!btDeviceName) {
                     console.log("No Bluetooth device name saved in settings. Skipping auto-connect.");
                     return;
@@ -1516,9 +1525,11 @@
 
                 try {
                     console.log("Checking for previously permitted devices...");
+                    // Récupère les appareils auxquels le site a déjà eu la permission d'accéder
                     const devices = await navigator.bluetooth.getDevices();
                     const matchingDevice = devices.find(device => device.name === btDeviceName);
 
+                    // Si un appareil correspondant est trouvé, tente la connexion
                     if (matchingDevice) {
                         console.log(`Found permitted device: ${matchingDevice.name}. Attempting to auto-connect...`);
                         await connectToDevice(matchingDevice);
@@ -2264,4 +2275,6 @@
 
 </body>
 </html>
+
+
 
