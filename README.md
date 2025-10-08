@@ -313,7 +313,8 @@
 
         .marker-btn {
             font-weight: 600;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
             border-radius: 0.5rem;
             background-color: #E5E7EB;
             color: var(--color-text-dark);
@@ -491,13 +492,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
+            width: 1.8rem;
+            height: 1.8rem;
             border: 2px solid #9CA3AF;
             border-radius: 9999px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             line-height: 1;
         }
         .radio-selector:checked + .radio-label {
@@ -2313,3 +2314,4 @@
 
 </body>
 </html>
+
