@@ -278,7 +278,7 @@
         .hidden { display: none !important; }
         
         #imageDisplayArea {
-            margin-top: 2rem;
+            margin-top: 0.5rem; /* Rapproché de l'entête */
             margin-left: -1rem;
             margin-right: -1rem;
         }
@@ -312,7 +312,8 @@
 
         .marker-btn {
             font-weight: 600;
-            padding: 0.5rem 1rem;
+            padding: 0.575rem 1.15rem; /* Taille augmentée de 15% */
+            font-size: 1rem; /* Taille augmentée de 15% */
             border-radius: 0.5rem;
             background-color: #E5E7EB;
             color: var(--color-text-dark);
@@ -1023,6 +1024,12 @@
             }
 
             function updateCorrections() {
+                // Si aucune image n'est affichée, on s'assure que ce conteneur est masqué et on arrête la fonction.
+                if (imageDisplayArea.classList.contains('hidden')) {
+                    correctionsContainer.classList.add('hidden');
+                    return;
+                }
+
                 correctionsText.innerHTML = '';
                 sendToScreenBtn.classList.add('hidden');
 
@@ -2277,6 +2284,8 @@
 
 </body>
 </html>
+
+
 
 
 
