@@ -36,7 +36,7 @@
             background-color: var(--color-bg-light);
             color: var(--color-text-dark);
             margin: 0;
-            padding: 1rem;
+            padding: 0;
             min-height: 100vh;
             overflow-x: hidden; /* Empêche le défilement horizontal */
             touch-action: manipulation; /* Empêche le zoom par double-tap */
@@ -539,6 +539,24 @@
             margin-top: auto; /* Pushes the button to the bottom when the container is large */
             padding-top: 2rem; /* Adds space above when content is displayed */
         }
+        
+        /* Media Queries for Responsiveness */
+        @media (min-width: 768px) { /* Applies on tablets and desktops */
+            body {
+                padding: 2rem; /* Restore padding for a "card" look on larger screens */
+            }
+        }
+        @media (max-width: 767px) { /* Applies on mobile phones */
+            .main-container {
+                padding: 1rem; /* Reduce padding on small screens */
+                border-radius: 0;
+                box-shadow: none;
+                min-height: 100vh; /* Ensure it fills the screen vertically */
+            }
+            .modal {
+                width: calc(100% - 2rem); /* Ensure modal doesn't touch edges */
+            }
+        }
     </style>
 </head>
 <body>
@@ -895,15 +913,15 @@
             
             function applyConfig(config) {
                 const machineNameHeader = document.querySelector('h1');
-                if (config.machineName && config.machineName.trim() !== '') {
+                if (config.machineName) {
                     machineNameInput.value = config.machineName;
-                    machineNameDisplay.textContent = config.machineName;
-                    machineNameHeader.classList.remove('hidden');
+                    machineNameDisplay.textContent = config.machineName || 'machine name';
                 } else {
                     machineNameInput.value = '';
                     machineNameDisplay.textContent = 'machine name';
-                    machineNameHeader.classList.add('hidden');
                 }
+                machineNameHeader.classList.add('hidden'); // Ensure it's hidden on initial load
+
                 if (config.flexoCount) {
                     const count = parseInt(config.flexoCount, 10);
                     flexoCountSlider.value = count;
@@ -999,6 +1017,8 @@
                 controlsContainer.classList.add('hidden');
                 correctionsContainer.classList.add('hidden');
                 upArrow.classList.add('hidden');
+                document.querySelector('h1').classList.add('hidden');
+
                 if (imagePreviewElement.src) {
                     URL.revokeObjectURL(imagePreviewElement.src);
                 }
@@ -1021,6 +1041,11 @@
                     imageDisplayArea.classList.remove('hidden'); 
                     controlsContainer.classList.remove('hidden');
                     upArrow.classList.remove('hidden');
+                    
+                    const machineNameHeader = document.querySelector('h1');
+                    if (machineNameInput.value.trim() !== '') {
+                        machineNameHeader.classList.remove('hidden');
+                    }
                 };
             }
 
@@ -2094,13 +2119,17 @@
             machineNameInput.addEventListener('input', (e) => {
                 const machineNameHeader = document.querySelector('h1');
                 const name = e.target.value;
-                if (name && name.trim() !== '') {
-                    machineNameDisplay.textContent = name;
-                    machineNameHeader.classList.remove('hidden');
-                } else {
-                    machineNameDisplay.textContent = 'machine name';
-                    machineNameHeader.classList.add('hidden');
+                machineNameDisplay.textContent = name || 'machine name';
+                
+                // Only show/hide if an image is currently displayed
+                if (!mainContainer.classList.contains('no-image')) {
+                     if (name && name.trim() !== '') {
+                        machineNameHeader.classList.remove('hidden');
+                    } else {
+                        machineNameHeader.classList.add('hidden');
+                    }
                 }
+               
                 saveState();
             });
             
@@ -2272,5 +2301,4 @@
 
 </body>
 </html>
-
 
