@@ -279,13 +279,15 @@
         
         #imageDisplayArea {
             margin-top: 2rem;
+            margin-left: -1rem;
+            margin-right: -1rem;
         }
         #imagePreview {
+            width: 100%;
             max-width: 100%;
-            margin-left: auto;
-            margin-right: auto;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: block;
+            border-radius: 0;
+            box-shadow: none;
         }
 
         #controlsContainer {
@@ -2275,6 +2277,7 @@
 
 </body>
 </html>
+
 
 
 
