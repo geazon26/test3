@@ -547,11 +547,18 @@
             }
         }
         @media (max-width: 767px) { /* Applies on mobile phones */
+            body {
+                background-color: var(--color-bg-white);
+            }
             .main-container {
                 padding: 1rem; /* Reduce padding on small screens */
                 border-radius: 0;
                 box-shadow: none;
                 min-height: 100vh; /* Ensure it fills the screen vertically */
+            }
+            #imageDisplayArea {
+                margin-left: -1rem;
+                margin-right: -1rem;
             }
             .modal {
                 width: calc(100% - 2rem); /* Ensure modal doesn't touch edges */
@@ -2306,4 +2313,9 @@
 
 </body>
 </html>
+" in the document "Page Blanche" and am asking a question based on this selection.
+You are an AI assistant. I have selected the code above in the most up-to-date Canvas document, and you should use it to answer my query below.
+In the previous turn, you fixed a bug. Now, I want you to make an additional change.
+
+quand je clic sur le bouton option il faut masquer le header avec le nom de la machine et l'icone photo, et aussi la zone des corrections et le bouton option lui-même
 
