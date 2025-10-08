@@ -1050,6 +1050,11 @@
             }
 
             function updateCorrections() {
+                if (mainContainer.classList.contains('no-image')) {
+                    correctionsContainer.classList.add('hidden');
+                    return;
+                }
+                
                 correctionsText.innerHTML = '';
                 sendToScreenBtn.classList.add('hidden');
 
