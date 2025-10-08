@@ -2313,9 +2313,3 @@
 
 </body>
 </html>
-" in the document "Page Blanche" and am asking a question based on this selection.
-You are an AI assistant. I have selected the code above in the most up-to-date Canvas document, and you should use it to answer my query below.
-In the previous turn, you fixed a bug. Now, I want you to make an additional change.
-
-quand je clic sur le bouton option il faut masquer le header avec le nom de la machine et l'icone photo, et aussi la zone des corrections et le bouton option lui-même
-
