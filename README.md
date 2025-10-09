@@ -289,6 +289,11 @@
             margin-right: auto;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            /* Empêche le menu contextuel (copier, etc.) d'apparaître sur l'image */
+            -webkit-user-select: none; /* Safari/Chrome */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE/Edge */
+            user-select: none; /* Standard */
         }
 
         #controlsContainer {
@@ -1124,7 +1129,7 @@
                 const containerRect = imageContainer.getBoundingClientRect();
                 const imageOffsetX = imageRect.left - containerRect.left;
                 const imageOffsetY = imageRect.top - containerRect.top;
-                marker.style.left = `${imageOffsetX + (imageRect.width * 0.05)}px`; 
+                marker.style.left = `${imageOffsetX + (imageRect.width * 0.5)}px`; 
                 marker.style.top = `${imageOffsetY + (imageRect.height * 0.95)}px`;
 
                 const currentSliderValue = markerSizeSlider.value;
@@ -2314,4 +2319,6 @@
 
 </body>
 </html>
+
+
 
